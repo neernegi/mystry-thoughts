@@ -27,11 +27,16 @@ export async function GET(
 
     // Check if the identifier is a valid ObjectId
     const isObjectId = Types.ObjectId.isValid(paramsIdentifier?.identifier);
-    
+
     // Find the user by either ID or username
-    const user = isObjectId 
-      ? await UserModel.findById(paramsIdentifier?.identifier).select("-password")
-      : await UserModel.findOne({ username: paramsIdentifier?.identifier }).select("-password");
+    const user = isObjectId
+      ? await UserModel.findById(paramsIdentifier?.identifier).select(
+          "username email avatarOptions image gender"
+        )
+      : await UserModel.findOne({
+          username: paramsIdentifier?.identifier,
+        }).select("username email avatarOptions image gender");
+  
 
     if (!user) {
       return Response.json(
@@ -66,7 +71,8 @@ export async function GET(
       .sort({ createdAt: -1 });
 
     const currentUser = await UserModel.findOne({ email: session.user.email });
-    const isOwner = currentUser && currentUser._id.toString() === user._id.toString();
+    const isOwner =
+      currentUser && currentUser._id.toString() === user._id.toString();
 
     return Response.json({
       success: true,
@@ -79,6 +85,7 @@ export async function GET(
           image: user.image,
           gender: user.gender,
           anonymousName: user.anonymousName,
+          avatarOptions: user.avatarOptions,
           createdAt: user?.createdAt,
         },
         thoughts,

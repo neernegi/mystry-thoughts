@@ -37,7 +37,7 @@ export async function PUT(req: Request) {
     const userId = session?.user?._id;
     await UserModel.findByIdAndUpdate(userId, {
       image: result.secure_url,
-      avatarOptions,
+      avatarOptions: avatarOptions
     });
 
     return NextResponse.json({

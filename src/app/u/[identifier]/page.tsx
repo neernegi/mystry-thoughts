@@ -35,6 +35,20 @@ interface User {
   gender: string;
   anonymousName: string;
   createdAt: string;
+  avatarOptions?: { 
+    avatarStyle: string;
+    topType: string;
+    accessoriesType: string;
+    hairColor: string;
+    facialHairType: string;
+    facialHairColor:string;
+    clotheType: string;
+    colorFabric:string;
+    eyeType: string;
+    eyebrowType: string;
+    mouthType: string;
+    skinColor: string;
+  };
 }
 
 interface Reply {
@@ -109,8 +123,10 @@ export default function ProfilePage() {
     try {
       const response = await fetch(`/api/user/${identifier}`);
       const data = await response.json();
+      
       if (data.success) {
         setProfileData(data.data);
+    
       } else {
         setProfileData(null);
       }
@@ -272,7 +288,7 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         
         <div className="relative max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           {/* Profile Header */}
-          <ProfileHeader />
+          <ProfileHeader avatarOptions={user?.avatarOptions} />
         </div>
       </div>
 

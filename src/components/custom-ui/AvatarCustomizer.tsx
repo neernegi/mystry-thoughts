@@ -11,16 +11,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X } from "lucide-react";
+import { User } from "@/model/user";
 
 // Define AvatarOptions type
 interface AvatarOptions {
   avatarStyle?: string;
   topType?: string;
   accessoriesType?: string;
-  hatColor?: string;
-  facialHairType?: string;
+  hairColor?: string;
+  facialHairType?:string;
   facialHairColor?: string;
   clotheType?: string;
+  colorFabric?:string;
   eyeType?: string;
   eyebrowType?: string;
   mouthType?: string;
@@ -35,37 +37,131 @@ interface AvatarCustomizerProps {
 
 const options = {
   avatarStyle: ["Circle", "Transparent"],
-  topType: [
-    "Turban",
-    "Hijab",
-    "Eyepatch",
-    "LongHairStraight",
-    "ShortHairShortFlat",
-    "NoHair",
-  ],
+ topType: [
+  "NoHair",
+  "Eyepatch",
+  "Hat",
+  "Hijab",
+  "Turban",
+  "WinterHat1",
+  "WinterHat2",
+  "WinterHat3",
+  "WinterHat4",
+  "LongHairBigHair",
+  "LongHairBob",
+  "LongHairBun",
+  "LongHairCurly",
+  "LongHairCurvy",
+  "LongHairDreads",
+  "LongHairFrida",
+  "LongHairFro",
+  "LongHairFroBand",
+  "LongHairNotTooLong",
+  "LongHairShavedSides",
+  "LongHairStraight",
+  "LongHairStraight2",
+  "LongHairStraightStrand",
+  "ShortHairDreads01",
+  "ShortHairDreads02",
+  "ShortHairFrizzle",
+  "ShortHairShaggyMullet",
+  "ShortHairShortCurly",
+  "ShortHairShortFlat",
+  "ShortHairShortRound",
+  "ShortHairShortWaved",
+  "ShortHairSides",
+  "ShortHairTheCaesar"
+],
+
   accessoriesType: [
     "Blank",
-    "Round",
-    "Wayfarers",
     "Kurt",
+    "Wayfarers",
+    "Round",
     "Prescription01",
     "Sunglasses",
   ],
-  hatColor: ["Blue03", "Black", "Red", "White", "Pink"],
-  facialHairType: ["BeardLight", "BeardMedium", "BeardMajestic", "Blank"],
-  facialHairColor: ["BrownDark", "Black", "Blonde", "Brown"],
+  hairColor: ["Blue", "Black", "Red", "White", "Pink","BrownDark","Blonde","SilverGray"],
+  facialHairType: ["BeardLight", "BeardMedium", "BeardMajestic", "Blank","MoustacheFancy", "MoustacheMagnum"],
+
+  facialHairColor:["Auburn","Black","Blonde","BlondeGolden","Brown","BrownDark","Red","Platinum"],
+  
   clotheType: [
     "BlazerShirt",
     "Hoodie",
     "ShirtCrewNeck",
     "ShirtScoopNeck",
     "GraphicShirt",
+    "CollarSweater"
   ],
-  eyeType: ["Default", "Close", "Happy", "Side", "Wink"],
-  eyebrowType: ["Default", "Angry", "UpDown", "RaisedExcited"],
-  mouthType: ["Default", "Smile", "Twinkle", "Eating", "Disbelief"],
-  skinColor: ["Light", "Brown", "DarkBrown", "Pale", "Yellow"],
+  colorFabric: [
+  "Black",
+  "Blue01",
+  "Blue02",
+  "Blue03",
+  "Gray01",
+  "Gray02",
+  "Heather",
+  "PastelBlue",
+  "PastelGreen",
+  "PastelOrange",
+  "PastelRed",
+  "PastelYellow",
+  "Pink",
+  "Red",
+  "White"
+],
+
+eyeType: [
+  "Close",
+  "Cry",
+  "Default",
+  "Dizzy",
+  "EyeRoll",
+  "Happy",
+  "Hearts",
+  "Side",
+  "Squint",
+  "Surprised",
+  "Wink",
+  "WinkWacky"
+],
+
+ eyebrowType: [
+  "Angry",
+  "AngryNatural",
+  "Default",
+  "DefaultNatural",
+  "FlatNatural",
+  "RaisedExcited",
+  "RaisedExcitedNatural",
+  "SadConcerned",
+  "SadConcernedNatural",
+  "UnibrowNatural",
+  "UpDown",
+  "UpDownNatural"
+],
+
+ mouthType: [
+  "Concerned",
+  "Default",
+  "Disbelief",
+  "Eating",
+  "Grimace",
+  "Sad",
+  "ScreamOpen",
+  "Serious",
+  "Smile",
+  "Tongue",
+  "Twinkle",
+  "Vomit"
+],
+
+  skinColor: ["Light", "Brown", "DarkBrown", "Pale", "Yellow","Black","Tanned"],
 };
+
+
+
 
 export function AvatarCustomizer({
   onSave,

@@ -1,0 +1,144 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_ENV: test
+  NEXT_PUBLIC_SOCKET_URL: http://localhost:3000
+  HOSTNAME: "localhost"
+  PORT: 3000
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+      CLOUD_NAME: ${{ secrets.CLOUD_NAME }}
+      CLOUD_API_KEY: ${{ secrets.CLOUD_API_KEY }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Type checking
+        run: npm run type-check
+      
+      - name: Lint code
+        run: npm run lint
+      
+      - name: Start Socket.io server
+        run: npm run dev:socket &
+      
+      - name: Run tests
+        run: npm test
+      
+      - name: Stop Socket.io server
+        run: pkill -f "tsx server.ts" || true
+      
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-coverage
+          path: coverage/
+
+  build:
+    name: Production Build
+    needs: test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: |
+            .next
+            public
+            package.json
+            package-lock.json
+            next.config.ts
+            server.ts
+
+  deploy:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+      CLOUD_NAME: ${{ secrets.CLOUD_NAME }}
+      CLOUD_API_KEY: ${{ secrets.CLOUD_API_KEY }}
+      CLOUD_API_SECRET: ${{ secrets.CLOUD_API_SECRET }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+          path: .
+      
+      - name: Install production dependencies
+        run: npm ci --omit=dev
+      
+      - name: Setup PM2 process manager
+        run: sudo npm install -g pm2
+      
+      - name: Start production servers
+        run: |
+          pm2 start npm --name "web" -- run start
+          pm2 start npm --name "socket" -- run dev:socket
+          pm2 save
+          pm2 startup
+      
+      - name: Save PM2 process list
+        run: pm2 save
+      
+      - name: Generate startup script
+        run: sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u $USER --hp $HOME
+      
+      - name: Verify servers are running
+        run: |
+          sleep 10  # Give servers time to start
+          pm2 list
+          curl -f http://localhost:3000/api/health || exit 1

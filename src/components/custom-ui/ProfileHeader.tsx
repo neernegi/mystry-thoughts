@@ -32,17 +32,29 @@ import {
 } from "@/components/ui/dialog";
 import { AvatarCustomizer } from "./AvatarCustomizer";
 
-
-
-interface User {
+export type User = {
   _id: string;
   username: string;
   email: string;
-  image: string;
-  gender: string;
-  anonymousName: string;
-  createdAt: string;
-}
+  image?: string;
+  gender?: string;
+  anonymousName?: string;
+  createdAt?: Date;
+  avatarOptions?: {
+    avatarStyle: string;
+    topType: string;
+    accessoriesType: string;
+    hairColor: string;
+    facialHairType: string;
+    facialHairColor: string;
+    clotheType: string;
+    colorFabric: string;
+    eyeType: string;
+    eyebrowType: string;
+    mouthType: string;
+    skinColor: string;
+  };
+};
 
 interface Reply {
   _id: string;
@@ -83,8 +95,9 @@ interface ProfileData {
 }
 
 // Helper function to format date
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
+function formatDate(dateInput: string | Date | undefined): string {
+  if (!dateInput) return "Unknown";
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
   return date.toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -92,16 +105,19 @@ function formatDate(dateString: string): string {
   });
 }
 
-export default function ProfileHeader() {
 
+
+
+interface ProfileHeaderProps {
+  avatarOptions?: User["avatarOptions"];
+}
+
+export default function ProfileHeader({ avatarOptions }: ProfileHeaderProps) {
   const params = useParams();
   const identifier = params?.identifier as string;
 
-
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
-;
- 
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
@@ -298,19 +314,18 @@ export default function ProfileHeader() {
               onSave={handleSaveAvatar}
               onClose={() => setShowAvatarModal(false)}
               initialOptions={{
-                avatarStyle: "Circle",
-                topType:
-                  user.gender === "female"
-                    ? "LongHairStraight"
-                    : "ShortHairShortWaved",
-                accessoriesType: "Blank",
-                hatColor: "BrownDark",
-                facialHairType: "Blank",
-                clotheType: "ShirtCrewNeck",
-                eyeType: "Side",
-                eyebrowType: "Angry",
-                mouthType: "Smile",
-                skinColor: "Light",
+                avatarStyle: avatarOptions?.avatarStyle,
+                topType: avatarOptions?.topType,
+                accessoriesType: avatarOptions?.accessoriesType,
+                hairColor: avatarOptions?.hairColor,
+                facialHairType: avatarOptions?.facialHairType,
+                facialHairColor:avatarOptions?.facialHairColor,
+                clotheType: avatarOptions?.clotheType,
+                colorFabric: avatarOptions?.colorFabric,
+                eyeType: avatarOptions?.eyeType,
+                eyebrowType: avatarOptions?.eyebrowType,
+                mouthType: avatarOptions?.mouthType,
+                skinColor: avatarOptions?.skinColor,
               }}
             />
           </DialogContent>

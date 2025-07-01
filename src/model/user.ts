@@ -1,5 +1,20 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 
+export interface AvatarOptions {
+  avatarStyle?: string;
+  topType?: string;
+  accessoriesType?: string;
+  hairColor?: string;
+  facialHairType?: string;
+  facialHairColor?: string;
+  clotheType?: string;
+  colorFabric?: string;
+  eyeType?: string;
+  eyebrowType?: string;
+  mouthType?: string;
+  skinColor?: string;
+}
+
 export interface User extends Document {
   _id: Types.ObjectId;
   username: string;
@@ -14,10 +29,27 @@ export interface User extends Document {
   isSearching: boolean;
   socketId?: string;
   isVerified: boolean;
+  avatarOptions?: AvatarOptions;
   isAcceptingConfessionReply: boolean;
   acceptMessages: boolean;
   createdAt: Date;
 }
+
+// Create a separate schema for AvatarOptions with Mixed type fallback
+const AvatarOptionsSchema = new Schema({
+  avatarStyle: { type: String, default: "" },
+  topType: { type: String, default: "" },
+  accessoriesType: { type: String, default: "" },
+  hairColor: { type: String, default: "" },
+  facialHairType: { type: String, default: "" },
+  facialHairColor: { type: String, default: "" },
+  clotheType: { type: String, default: "" },
+  colorFabric: { type: String, default: "" },
+  eyeType: { type: String, default: "" },
+  eyebrowType: { type: String, default: "" },
+  mouthType: { type: String, default: "" },
+  skinColor: { type: String, default: "" },
+}, { _id: false, strict: false });
 
 const UserSchema: Schema<User> = new Schema({
   username: {
@@ -65,15 +97,20 @@ const UserSchema: Schema<User> = new Schema({
     type: Boolean,
     default: false,
   },
+  // Use Mixed type as a more reliable alternative
+  avatarOptions: {
+    type: Schema.Types.Mixed,
+    default: {}
+  },
   isAcceptingConfessionReply: {
     type: Boolean,
     default: true,
   },
   acceptMessages: { type: Boolean, default: true },
-  createdAt:{
+  createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 const UserModel =
@@ -81,6 +118,3 @@ const UserModel =
   mongoose.model<User>("User", UserSchema);
 
 export default UserModel;
-
-
-
