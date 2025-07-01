@@ -1,7 +1,6 @@
 // ✅ app/api/match/route.ts
 
 import dbConnect from "@/lib/dbConnect";
-import ChatRoom from "@/model/chatRoom";
 import UserModel from "@/model/user";
 // import Message from "@/model/message";
 import UserMatch from "@/model/userMatch";

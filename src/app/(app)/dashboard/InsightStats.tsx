@@ -3,13 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, MessageSquare, Heart, Eye } from 'lucide-react';
+import type { InsightStats } from '@/types/interfaces';
 
-interface InsightStats {
-  totalThoughts: number;
-  totalConfessions: number;
-  insightsGenerated: number;
-  avgEngagement: number;
-}
+
+
 
 const InsightStats = () => {
   const [stats, setStats] = useState<InsightStats | null>(null);

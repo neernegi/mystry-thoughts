@@ -12,7 +12,7 @@ interface ChatPageProps {
 export default async function ChatPage({ params }: ChatPageProps) {
   const session = await getServerSession(authOptions);
 
-  // Keep this line exactly as is
+
   const paramId = await params;
 
   if (!session || !session.user) {

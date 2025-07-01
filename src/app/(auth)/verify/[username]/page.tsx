@@ -44,7 +44,7 @@ function VerifyAccount() {
       }
     } catch (error) {
       console.error("Error in verification:", error);
-      const axiosError = error as AxiosError<ApiResponse>;
+      const axiosError = error as AxiosError<ApiResponse<any>>;
       let errorMessage = axiosError.response?.data?.message || "Verification failed";
       toast.error(errorMessage);
     }

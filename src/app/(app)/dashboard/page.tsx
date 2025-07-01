@@ -21,41 +21,14 @@ import {
 import { Copy, RefreshCw, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as z from "zod";
-import InfoCards from "@/components/custom-ui/KeyInfo";
-import AISlideShow from "@/components/custom-ui/AiSlideShow";
+
 import InsightStats from "./InsightStats";
 import InsightHistory from "./InsightHistory";
 import DashboardInsights from "./DashboardInsights";
 // import DashboardInsights from "./DashboardInsights";
 
 function DashboardPage() {
-  const keyTerms = [
-    {
-      icon: "🌐",
-      title: "Server Components",
-      description:
-        "React components that render on the server for better performance",
-    },
-    {
-      icon: "🔀",
-      title: "Route Groups",
-      description:
-        "Next.js feature for organizing routes without affecting URL structure",
-    },
-    {
-      icon: "📡",
-      title: "Streaming",
-      description: "Technique for progressively rendering UI components",
-    },
-    {
-      icon: "⏳",
-      title: "Suspense",
-      description: "React feature for handling loading states",
-    },
-  ];
-  // const [messages, setMessages] = useState<Message[]>([])
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSwitchLoading, setIsSwitchLoading] = useState(false);
+  
 
   const { data: session, status } = useSession();
 

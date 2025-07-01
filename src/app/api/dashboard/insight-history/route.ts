@@ -27,14 +27,14 @@ export async function GET(request: NextRequest) {
     // Combine and sort by date
     const combined = [
       ...recentThoughts.map(t => ({
-        id: t._id.toString(),
+        id: String(t._id),
         type: 'thought' as const,
         timestamp: t.createdAt,
         preview: t.thought,
         aiSummary: generateQuickSummary(t.thought)
       })),
       ...recentConfessions.map(c => ({
-        id: c._id.toString(),
+        id: String(c._id),
         type: 'confession' as const,
         timestamp: c.createdAt,
         preview: c.confession,

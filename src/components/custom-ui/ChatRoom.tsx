@@ -8,17 +8,9 @@ import { Send, MessageCircle } from 'lucide-react';
 import { toast, Toaster } from "sonner";
 
 import { socket } from '@/lib/socketClient';
+import { Message } from '@/types/interfaces';
 
-interface Message {
-  _id: string;
-  content: string;
-  sender: {
-    _id: string;
-    anonymousName: string;
-    image: string;
-  };
-  timestamp: string;
-}
+
 
 interface MatchedUser {
   anonymousName: string;
@@ -139,7 +131,7 @@ const ChatRoom = ({ chatRoomId }: { chatRoomId: string }) => {
         _id: tempId,
         content: newMessage,
         sender: {
-          _id: session.user._id,
+          _id: session.user._id ??"",
           anonymousName: "You",
           image: session.user.image
         },
@@ -235,7 +227,7 @@ const ChatRoom = ({ chatRoomId }: { chatRoomId: string }) => {
                 <div className="flex items-end space-x-2 max-w-xs lg:max-w-md">
                   {!isMyMessage(message.sender._id) && (
                     <img
-                      src={message.sender.image}
+                      src={message?.sender?.image}
                       alt="Avatar"
                       className="w-8 h-8 rounded-full"
                     />

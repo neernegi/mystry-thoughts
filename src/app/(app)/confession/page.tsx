@@ -16,38 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import { Confession, Reply, User } from "@/types/interfaces";
+import { ApiResponse } from "@/types/ApiResponse";
+import { formatTimeAgo } from "@/helpers/formatTime";
 
-// Define types for your data structures
-type User = {
-  _id: string;
-  username: string;
-  anonymousName?: string;
-  image?: string;
-};
 
-type Reply = {
-  _id: string;
-  replyConfession: string;
-  user: User;
-  createdAt: string | Date;
-  updatedAt?: string | Date;
-};
 
-type Confession = {
-  _id: string;
-  user: User;
-  confession: string;
-  repliesToConfession: Reply[];
-  createdAt: string | Date;
-  updatedAt?: string | Date;
-  __v?: number;
-};
 
-type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
 
 function DashboardPage() {
   const [confessions, setConfessions] = useState<Confession[]>([]);
@@ -72,24 +47,7 @@ function DashboardPage() {
   };
 
   // Helper function to format time
-  const formatTimeAgo = (date: string | Date): string => {
-    const now = new Date();
-    const dateObj = typeof date === "string" ? new Date(date) : date;
-    const diffInSeconds = Math.floor(
-      (now.getTime() - dateObj.getTime()) / 1000
-    );
 
-    if (diffInSeconds < 60) return `${diffInSeconds}s`;
-
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}m`;
-
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h`;
-
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d`;
-  };
 
   const showToast = (
     message: string,

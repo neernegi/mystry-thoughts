@@ -12,22 +12,10 @@ import {
 } from "@/components/ui/select";
 import { X } from "lucide-react";
 import { User } from "@/model/user";
+import { AvatarOptions } from "@/types/interfaces";
 
 // Define AvatarOptions type
-interface AvatarOptions {
-  avatarStyle?: string;
-  topType?: string;
-  accessoriesType?: string;
-  hairColor?: string;
-  facialHairType?:string;
-  facialHairColor?: string;
-  clotheType?: string;
-  colorFabric?:string;
-  eyeType?: string;
-  eyebrowType?: string;
-  mouthType?: string;
-  skinColor?: string;
-}
+
 
 interface AvatarCustomizerProps {
   onSave: (avatarData: AvatarOptions) => Promise<void>;

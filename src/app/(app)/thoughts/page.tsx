@@ -18,39 +18,11 @@ import { Badge } from "@/components/ui/badge";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { toast } from "sonner";
+import { ApiResponse } from "@/types/ApiResponse";
+import { Thought, TReply, User } from "@/types/interfaces";
+import { formatTimeAgo } from "@/helpers/formatTime";
 
-interface User {
-  _id: string;
-  username: string;
-  anonymousName?: string;
-  image?: string;
-}
 
-interface Reply {
-  _id: string;
-  user: User;
-  reply: string;
-  replyOfreplies?: Reply[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Thought {
-  _id: string;
-  user: User;
-  thought: string;
-  image: string[];
-  thoughtReplies: Reply[];
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
 
 function DashboardPage() {
   const [thoughts, setThoughts] = useState<Thought[]>([]);
@@ -63,19 +35,6 @@ function DashboardPage() {
 
   const { data: session, status } = useSession();
 
-  const formatTimeAgo = (dateString: string): string => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return `${diffInSeconds}s`;
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}m`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d`;
-  };
 
   const fetchThoughts = useCallback(async (refresh = false) => {
     setIsLoading(true);
@@ -143,7 +102,7 @@ function DashboardPage() {
     setIsSubmittingReply(true);
     try {
       // Optimistically update UI
-      const optimisticReply: Reply = {
+      const optimisticReply: TReply = {
         _id: `temp-${Date.now()}`,
         user: {
           _id: session?.user._id ?? "",
@@ -175,7 +134,7 @@ function DashboardPage() {
       }));
 
       // Make API call
-      const response = await axios.post<ApiResponse<Reply>>(
+      const response = await axios.post<ApiResponse<TReply>>(
         `/api/thoughts/${thoughtId}/replies`,
         { reply: replyContent }
       );
@@ -279,7 +238,7 @@ function DashboardPage() {
     }
   };
 
-  const getUniqueRepliers = (replies: Reply[], currentCount: number): User[] => {
+  const getUniqueRepliers = (replies: TReply[], currentCount: number): User[] => {
     const uniqueUsers = new Map<string, User>();
     replies.slice(0, currentCount).forEach((reply) => {
       if (reply.user && !uniqueUsers.has(reply.user._id)) {
@@ -289,7 +248,7 @@ function DashboardPage() {
     return Array.from(uniqueUsers.values()).slice(0, 3);
   };
 
-  const isReplyOwner = (reply: Reply) => {
+  const isReplyOwner = (reply: TReply) => {
     return reply.user._id === session?.user?._id;
   };
 

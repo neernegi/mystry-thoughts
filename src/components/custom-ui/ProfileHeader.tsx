@@ -1,115 +1,25 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  Heart,
-  MessageCircle,
   Calendar,
-  MapPin,
   Edit3,
-  Trash2,
-  Plus,
-  Eye,
-  EyeOff,
-  Send,
   User,
   Mail,
-  Users,
-  Image as ImageIcon,
-  X,
+
+  // Image as ImageIcon,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AvatarCustomizer } from "./AvatarCustomizer";
-
-export type User = {
-  _id: string;
-  username: string;
-  email: string;
-  image?: string;
-  gender?: string;
-  anonymousName?: string;
-  createdAt?: Date;
-  avatarOptions?: {
-    avatarStyle: string;
-    topType: string;
-    accessoriesType: string;
-    hairColor: string;
-    facialHairType: string;
-    facialHairColor: string;
-    clotheType: string;
-    colorFabric: string;
-    eyeType: string;
-    eyebrowType: string;
-    mouthType: string;
-    skinColor: string;
-  };
-};
-
-interface Reply {
-  _id: string;
-  user: {
-    _id: string;
-    username: string;
-    anonymousName: string;
-    image: string;
-  };
-  reply?: string;
-  replyConfession?: string;
-  createdAt: string;
-  replyOfreplies?: Reply[];
-}
-
-interface Thought {
-  _id: string;
-  user: User;
-  thought: string;
-  image: string[];
-  thoughtReplies: Reply[];
-  createdAt: string;
-}
-
-interface Confession {
-  _id: string;
-  user: User;
-  confession: string;
-  repliesToConfession: Reply[];
-  createdAt: string;
-}
-
-interface ProfileData {
-  user: User;
-  thoughts: Thought[];
-  confessions: Confession[];
-  isOwner: boolean;
-}
-
-// Helper function to format date
-function formatDate(dateInput: string | Date | undefined): string {
-  if (!dateInput) return "Unknown";
-  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-
-
+import { ProfileData, User as IUser } from "@/types/interfaces";
+import { formatDate } from "@/helpers/formatTime";
 
 interface ProfileHeaderProps {
-  avatarOptions?: User["avatarOptions"];
+  avatarOptions?: IUser["avatarOptions"];
 }
 
 export default function ProfileHeader({ avatarOptions }: ProfileHeaderProps) {
@@ -149,34 +59,6 @@ export default function ProfileHeader({ avatarOptions }: ProfileHeaderProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      const validFiles = files.filter(
-        (file) => file.type.match("image.*") && file.size <= 5 * 1024 * 1024
-      );
-
-      setImages((prev) => [...prev, ...validFiles]);
-
-      const newPreviewUrls = validFiles.map((file) =>
-        URL.createObjectURL(file)
-      );
-      setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
-    }
-  };
-
-  const removeImage = (index: number) => {
-    const newImages = [...images];
-    const newPreviews = [...previewUrls];
-
-    newImages.splice(index, 1);
-    newPreviews.splice(index, 1);
-
-    setImages(newImages);
-    setPreviewUrls(newPreviews);
-    URL.revokeObjectURL(previewUrls[index]);
   };
 
   const handleSaveAvatar = async (avatarData: any) => {
@@ -319,7 +201,7 @@ export default function ProfileHeader({ avatarOptions }: ProfileHeaderProps) {
                 accessoriesType: avatarOptions?.accessoriesType,
                 hairColor: avatarOptions?.hairColor,
                 facialHairType: avatarOptions?.facialHairType,
-                facialHairColor:avatarOptions?.facialHairColor,
+                facialHairColor: avatarOptions?.facialHairColor,
                 clotheType: avatarOptions?.clotheType,
                 colorFabric: avatarOptions?.colorFabric,
                 eyeType: avatarOptions?.eyeType,

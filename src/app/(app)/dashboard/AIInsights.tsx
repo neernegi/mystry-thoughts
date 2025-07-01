@@ -12,19 +12,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Brain, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InsightData } from "@/types/interfaces";
 
-interface SlideContent {
-  heading: string;
-  bulletPoints: string[];
-}
 
-interface InsightData {
-  id: string;
-  type: "thought" | "confession";
-  originalContent: string;
-  slides: SlideContent[];
-  timestamp: Date;
-}
 
 const AIIInsight = ({ type }: { type: "thought" | "confession" }) => {
   const [currentInsight, setCurrentInsight] = useState<InsightData | null>(

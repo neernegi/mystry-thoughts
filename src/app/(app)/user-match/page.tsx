@@ -24,64 +24,19 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { IMatch } from "@/model/userMatch";
 import { socket } from "@/lib/socketClient";
+import {
+  ActiveChat,
+  ChatRoom,
+  ExistingMatch,
+  User as IUser,
+  MatchFoundResponse,
+  MessageRequest,
+  MessageRequestResponse,
+} from "@/types/interfaces";
+import { formatTimeAgo } from "@/helpers/formatTime";
 
 
-interface UserData {
-  _id: string;
-  anonymousName: string;
-  image: string;
-  username?: string;
-}
 
-interface ChatRoom {
-  _id: string;
-}
-
-interface ExistingMatch {
-  _id: string;
-  chatRoom: ChatRoom;
-  user1: UserData;
-  user2: UserData;
-  lastMessage?: {
-    content: string;
-    timestamp: string;
-  };
-  createdAt: string;
-  status: "pending" | "accepted" | "rejected";
-}
-
-interface MessageRequest {
-  _id: string;
-  sender: UserData;
-  recipient: UserData;
-  status: "pending" | "accepted" | "rejected";
-  relatedMatch: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-}
-
-interface MessageRequestResponse {
-  success: boolean;
-  message: string;
-  requests: MessageRequest[];
-}
-
-interface MatchResponse {
-  success: boolean;
-  matches?: ExistingMatch[];
-  pendingMatches?: ExistingMatch[];
-  message?: string;
-}
-
-interface MatchFoundResponse {
-  success: boolean;
-  match?: IMatch;
-  chatRoom?: {
-    _id: string;
-  };
-  message?: string;
-}
 
 export default function MatchPage() {
   const [isMatching, setIsMatching] = useState(false);
@@ -92,23 +47,28 @@ export default function MatchPage() {
     chatRoomId: string;
   } | null>(null);
   const [existingMatches, setExistingMatches] = useState<ExistingMatch[]>([]);
+  const [activeChats, setActiveChats] = useState<ActiveChat[]>([]); // New state for active chats
   const [isLoadingMatchRequest, setIsLoadingMatchRequest] = useState(true);
-  const [matchRequestData, setMatchRequestData] = useState<MessageRequest[]>([]);
+  const [matchRequestData, setMatchRequestData] = useState<MessageRequest[]>(
+    []
+  );
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"active" | "requests" | "sent">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "requests" | "sent">(
+    "active"
+  );
   const router = useRouter();
   const { data: session, status } = useSession();
 
   // Separate requests into received and sent using useMemo
   const receivedRequests = useMemo(() => {
-    return matchRequestData.filter(request => 
-      request.sender._id !== session?.user?._id
+    return matchRequestData.filter(
+      (request) => request.sender._id !== session?.user?._id
     );
   }, [matchRequestData, session?.user?._id]);
 
   const sentRequests = useMemo(() => {
-    return matchRequestData.filter(request => 
-      request.sender._id === session?.user?._id
+    return matchRequestData.filter(
+      (request) => request.sender._id === session?.user?._id
     );
   }, [matchRequestData, session?.user?._id]);
 
@@ -121,28 +81,37 @@ export default function MatchPage() {
   const handleFetchMatchRequest = async () => {
     setIsLoadingMatchRequest(true);
     try {
-      const response = await axios.get<MessageRequestResponse>("/api/messageRequest");
+      const response = await axios.get<MessageRequestResponse>(
+        "/api/messageRequest"
+      );
 
       if (response.data.success) {
         const allRequests = response.data.requests;
-        
+
         // Filter pending requests for the requests tab
-        const pendingRequests = allRequests.filter(req => req.status === "pending");
+        const pendingRequests = allRequests.filter(
+          (req) => req.status === "pending"
+        );
         setMatchRequestData(pendingRequests);
-        
+
         // Filter accepted requests for active chats
-        const acceptedRequests = allRequests.filter(req => req.status === "accepted");
-        
-        // Convert accepted requests to ExistingMatch format
-        const activeMatches: ExistingMatch[] = acceptedRequests.map(req => ({
+        const acceptedRequests = allRequests.filter(
+          (req) => req.status === "accepted"
+        );
+
+        // Fetch chat room details for each accepted request
+        await fetchActiveChats(acceptedRequests);
+
+        // Convert accepted requests to ExistingMatch format (keep for compatibility)
+        const activeMatches: ExistingMatch[] = acceptedRequests.map((req) => ({
           _id: req.relatedMatch,
-          chatRoom: { _id: "temp" }, // We'll need to get this from the chat creation
+          chatRoom: { _id: "temp" },
           user1: req.sender,
           user2: req.recipient,
           createdAt: req.createdAt,
           status: "accepted" as const,
         }));
-        
+
         setExistingMatches(activeMatches);
       }
     } catch (error) {
@@ -153,20 +122,73 @@ export default function MatchPage() {
     }
   };
 
+  // New function to fetch active chats with last messages
+  const fetchActiveChats = async (acceptedRequests: MessageRequest[]) => {
+    const chats: ActiveChat[] = [];
+    const currentUserId = session?.user?._id;
+
+    for (const request of acceptedRequests) {
+      try {
+        const otherUser = request.sender._id === currentUserId ? request.recipient : request.sender;
+        const participants = [currentUserId, otherUser._id].join(",");
+
+        // Find the chat room
+        const chatResponse = await axios.get(`/api/chat/find`, {
+          params: { participants },
+        });
+
+        if (chatResponse.data.success && chatResponse.data.chatRoom) {
+          const chatRoom = chatResponse.data.chatRoom;
+          
+          // Get chat details including messages
+          const chatDetailResponse = await axios.get(`/api/chat/${chatRoom._id}`);
+          
+          let lastMessage = undefined;
+          if (chatDetailResponse.data.success && chatDetailResponse.data.messages.length > 0) {
+            const messages = chatDetailResponse.data.messages;
+            const lastMsg = messages[messages.length - 1];
+            lastMessage = {
+              content: lastMsg.content,
+              timestamp: lastMsg.timestamp,
+              sender: lastMsg.sender._id,
+            };
+          }
+
+          chats.push({
+            _id: request._id,
+            chatRoomId: chatRoom._id,
+            otherUser: otherUser,
+            lastMessage,
+            createdAt: request.createdAt,
+            status: request.status,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching chat details:", error);
+        // Still add the chat without last message if there's an error
+        const otherUser = request.sender._id === currentUserId ? request.recipient : request.sender;
+        chats.push({
+          _id: request._id,
+          chatRoomId: "",
+          otherUser: otherUser,
+          createdAt: request.createdAt,
+          status: request.status,
+        });
+      }
+    }
+
+    setActiveChats(chats);
+  };
+
   const handleAcceptMatch = async (requestId: string) => {
     try {
       const response = await axios.post(`/api/messageRequest/respond`, {
         requestId: requestId,
         accept: true,
       });
-      
+
       if (response.data.success) {
         await handleFetchMatchRequest();
-        
-        // Navigate to chat if chatRoom ID is available
-        if (response.data.data?.chatRoom?._id) {
-          router.push(`/chat/${response.data.data.chatRoom._id}`);
-        }
         toast.success("Match accepted!");
       }
     } catch (err) {
@@ -182,7 +204,7 @@ export default function MatchPage() {
         requestId: requestId,
         accept: false,
       });
-      
+
       if (response.data.success) {
         await handleFetchMatchRequest();
         toast.success("Match request declined");
@@ -199,18 +221,18 @@ export default function MatchPage() {
     setError(null);
     try {
       const response = await axios.post<MatchFoundResponse>("/api/user-match");
-      
+
       if (response.data.success && response.data.data?.match) {
         const match = response.data.data.match;
         const otherUser = match.user2;
-        
+
         setMatchedUser({
-          anonymousName: otherUser.anonymousName,
-          avatar: otherUser.image,
+          anonymousName: otherUser?.anonymousName ?? "",
+          avatar: otherUser?.image ?? "",
           chatRoomId: "",
         });
         setIsMatched(true);
-        
+
         await handleFetchMatchRequest();
         toast.success(`Match request sent to ${otherUser.anonymousName}`);
       } else {
@@ -220,7 +242,8 @@ export default function MatchPage() {
       }
     } catch (err) {
       console.error("Matching error:", err);
-      const errorMsg = (err as any)?.response?.data?.message ||
+      const errorMsg =
+        (err as any)?.response?.data?.message ||
         "An error occurred while matching";
       setError(errorMsg);
       toast.error(errorMsg);
@@ -234,61 +257,34 @@ export default function MatchPage() {
     setMatchedUser(null);
   };
 
-
-  /*
-  const handleContinueExistingChat = async (match: ExistingMatch) => {
+  const handleContinueExistingChat = async (chat: ActiveChat) => {
     try {
-      const currentUserId = session?.user?._id;
-      const otherUser = getOtherUser(match);
-      
-      const response = await axios.get(`/api/chat/find`, {
-        params: {
-          participants: [currentUserId, otherUser._id]
-        }
-      });
-      console.log("params:",response)
-      
-      if (response.data.success && response.data.chatRoom) {
-        router.push(`/chat/${response.data.chatRoom._id}`);
-    
+      if (chat.chatRoomId) {
+        socket.connect();
+        router.push(`/chat/${chat.chatRoomId}`);
       } else {
-        toast.error("Chat room not found");
+        // Fallback: find chat room if not available
+        const currentUserId = session?.user?._id;
+        const participants = [currentUserId, chat.otherUser._id].join(",");
+
+        const response = await axios.get(`/api/chat/find`, {
+          params: { participants },
+        });
+
+        if (response.data.success && response.data.chatRoom) {
+          socket.connect();
+          router.push(`/chat/${response.data.chatRoom._id}`);
+        } else {
+          toast.error("Chat room not found");
+        }
       }
     } catch (error) {
-      console.error("Error finding chat room:", error);
+      console.error("Error opening chat:", error);
       toast.error("Failed to open chat");
     }
   };
 
-  */
-
-  const handleContinueExistingChat = async (match: ExistingMatch) => {
-  try {
-    const currentUserId = session?.user?._id;
-    const otherUser = getOtherUser(match);
-    
-    // Format participants as comma-separated string
-    const participants = [currentUserId, otherUser._id].join(',');
-    
-    const response = await axios.get(`/api/chat/find`, {
-      params: {
-        participants: participants
-      }
-    });
-    
-    if (response.data.success && response.data.chatRoom) {
-       socket.connect();
-      router.push(`/chat/${response.data.chatRoom._id}`);
-    } else {
-      toast.error("Chat room not found");
-    }
-  } catch (error) {
-    console.error("Error finding chat room:", error);
-    toast.error("Failed to open chat");
-  }
-};
-
-  const getOtherUser = (match: ExistingMatch): UserData => {
+  const getOtherUser = (match: ExistingMatch): IUser => {
     if (!session?.user?._id) return match.user2;
 
     const currentUserId = session.user._id;
@@ -296,19 +292,6 @@ export default function MatchPage() {
     const user2Id = match.user2._id.toString();
 
     return user1Id === currentUserId ? match.user2 : match.user1;
-  };
-
-  const formatTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const messageTime = new Date(timestamp);
-    const diffInMinutes = Math.floor(
-      (now.getTime() - messageTime.getTime()) / (1000 * 60)
-    );
-
-    if (diffInMinutes < 1) return "Just now";
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
   if (isMatching) return <MatchingAnimation />;
@@ -336,7 +319,7 @@ export default function MatchPage() {
 
           <div className="flex items-center space-x-4">
             <div className="text-sm text-gray-300">
-              <span className="font-medium">{existingMatches.length}</span> active
+              <span className="font-medium">{activeChats.length}</span> active
               {receivedRequests.length > 0 && (
                 <span className="text-green-400 ml-2">
                   {receivedRequests.length} received
@@ -380,13 +363,13 @@ export default function MatchPage() {
           >
             <MessageCircle className="w-5 h-5" />
             <span>Active Chats</span>
-            {existingMatches.length > 0 && (
+            {activeChats.length > 0 && (
               <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
-                {existingMatches.length}
+                {activeChats.length}
               </span>
             )}
           </button>
-          
+
           <button
             onClick={() => setActiveTab("requests")}
             className={`px-6 py-3 font-medium flex items-center space-x-2 ${
@@ -403,7 +386,7 @@ export default function MatchPage() {
               </span>
             )}
           </button>
-          
+
           <button
             onClick={() => setActiveTab("sent")}
             className={`px-6 py-3 font-medium flex items-center space-x-2 ${
@@ -422,68 +405,62 @@ export default function MatchPage() {
           </button>
         </div>
 
-        {/* Active Chats Tab */}
+        {/* Active Chats Tab - Updated to use activeChats */}
         {activeTab === "active" && (
           <>
-            {!isLoadingMatchRequest && existingMatches.length > 0 ? (
+            {!isLoadingMatchRequest && activeChats.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {existingMatches.map((match) => {
-                  const otherUser = getOtherUser(match);
-                  return (
-                    <div
-                      key={match._id}
-                      onClick={() => handleContinueExistingChat(match)}
-                      className="bg-gray-800 rounded-xl p-6 hover:bg-gray-700 transition-all duration-300 cursor-pointer transform hover:scale-105 border border-gray-700 hover:border-purple-500/50 group relative"
-                    >
-                      <div className="flex items-center space-x-4 mb-4">
-                        <div className="relative">
-                          <img
-                            src={otherUser.image}
-                            alt={otherUser.anonymousName}
-                            className="w-14 h-14 rounded-full ring-2 ring-purple-500/20 group-hover:ring-purple-500/40 transition-all"
-                          />
-                          <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-gray-800"></div>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-white text-lg">
-                            {otherUser.anonymousName}
-                          </h3>
-                          <div className="flex items-center text-sm text-green-400">
-                            <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                            Online
-                          </div>
-                        </div>
+                {activeChats.map((chat) => (
+                  <div
+                    key={chat._id}
+                    onClick={() => handleContinueExistingChat(chat)}
+                    className="bg-gray-800 rounded-xl p-6 hover:bg-gray-700 transition-all duration-300 cursor-pointer transform hover:scale-105 border border-gray-700 hover:border-purple-500/50 group relative"
+                  >
+                    <div className="flex items-center space-x-4 mb-4">
+                      <div className="relative">
+                        <img
+                          src={chat.otherUser?.image}
+                          alt={chat.otherUser?.anonymousName}
+                          className="w-14 h-14 rounded-full ring-2 ring-purple-500/20 group-hover:ring-purple-500/40 transition-all"
+                        />
+                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-gray-800"></div>
                       </div>
-
-                      {match.lastMessage ? (
-                        <div className="mb-4">
-                          <p className="text-gray-300 text-sm line-clamp-2 mb-2">
-                            {match.lastMessage.content}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {formatTimeAgo(match.lastMessage.timestamp)}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="mb-4">
-                          <p className="text-gray-400 text-sm italic">
-                            No messages yet - start the conversation!
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-700">
-                        <span className="text-xs text-gray-500">
-                          Matched {formatTimeAgo(match.createdAt)}
-                        </span>
-                        <div className="flex items-center text-purple-400 text-sm font-medium group-hover:text-purple-300">
-                          Continue Chat
-                          <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                        </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-white text-lg">
+                          {chat.otherUser?.anonymousName}
+                        </h3>
                       </div>
                     </div>
-                  );
-                })}
+
+                    {chat.lastMessage ? (
+                      <div className="mb-4">
+                        <p className="text-gray-300 text-sm line-clamp-2 mb-2">
+                          {chat.lastMessage.sender === session?.user?._id ? "You: " : ""}
+                          {chat.lastMessage.content}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatTimeAgo(chat.lastMessage.timestamp)}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mb-4">
+                        <p className="text-gray-400 text-sm italic">
+                          No messages yet - start the conversation!
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+                      <span className="text-xs text-gray-500">
+                        Matched {formatTimeAgo(chat.createdAt)}
+                      </span>
+                      <div className="flex items-center text-purple-400 text-sm font-medium group-hover:text-purple-300">
+                        Continue Chat
+                        <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="text-center py-12">
@@ -516,15 +493,15 @@ export default function MatchPage() {
                     <div className="flex items-center space-x-4 mb-4">
                       <div className="relative">
                         <img
-                          src={request.sender.image}
-                          alt={request.sender.username}
+                          src={request.sender?.image}
+                          alt={request.sender?.anonymousName}
                           className="w-14 h-14 rounded-full ring-2 ring-green-500/20"
                         />
                         <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-gray-800"></div>
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-white text-lg">
-                          {request.sender.anonymousName}
+                          {request.sender?.anonymousName}
                         </h3>
                         <div className="flex items-center text-sm text-green-400">
                           <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
@@ -534,7 +511,8 @@ export default function MatchPage() {
                     </div>
 
                     <p className="text-gray-400 text-sm mb-6">
-                      {request.sender.anonymousName} sent you a match request. Accept to start chatting.
+                      {request.sender.anonymousName} sent you a match request.
+                      Accept to start chatting.
                     </p>
 
                     <div className="flex space-x-3">
@@ -587,15 +565,15 @@ export default function MatchPage() {
                     <div className="flex items-center space-x-4 mb-4">
                       <div className="relative">
                         <img
-                          src={request.recipient.image}
-                          alt={request.recipient.username}
+                          src={request.recipient?.image}
+                          alt={request.recipient?.anonymousName}
                           className="w-14 h-14 rounded-full ring-2 ring-yellow-500/20"
                         />
                         <div className="absolute bottom-0 right-0 w-4 h-4 bg-yellow-500 rounded-full border-2 border-gray-800"></div>
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-white text-lg">
-                          {request.recipient.anonymousName}
+                          {request.recipient?.anonymousName}
                         </h3>
                         <div className="flex items-center text-sm text-yellow-400">
                           <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
@@ -605,7 +583,8 @@ export default function MatchPage() {
                     </div>
 
                     <p className="text-gray-400 text-sm mb-6">
-                      You sent a match request to {request.recipient.anonymousName}. Waiting for response.
+                      You sent a match request to{" "}
+                      {request.recipient.anonymousName}. Waiting for response.
                     </p>
 
                     <div className="flex space-x-3">
@@ -644,7 +623,7 @@ export default function MatchPage() {
           </div>
         )}
 
-        {existingMatches.length === 0 &&
+        {activeChats.length === 0 &&
           receivedRequests.length === 0 &&
           sentRequests.length === 0 &&
           !isLoadingMatchRequest && (

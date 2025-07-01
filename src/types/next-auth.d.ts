@@ -5,7 +5,8 @@ declare module "next-auth" {
   interface User {
     _id?: string;
     username?: string;
-    image:string
+    image:string;
+    anonymousName?: string;
     isVerified?: boolean;
     isAcceptingConfessionReply?: boolean;
   }
@@ -15,6 +16,7 @@ declare module "next-auth" {
       _id?: string;
       image:string;
       username?: string;
+      anonymousName?: string;
       isVerified?: boolean;
       isAcceptingConfessionReply?: boolean;
     } & DefaultSession["user"];
@@ -27,6 +29,7 @@ declare module "next-auth/jwt" {
     _id?: string;
     image:string;
     username?: string;
+    anonymousName?: string;
     isVerified?: boolean;
     isAcceptingConfessionReply?: boolean;
   }

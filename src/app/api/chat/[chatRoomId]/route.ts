@@ -94,10 +94,11 @@ export async function POST(req: Request, { params }: { params: { chatRoomId: str
 
   try {
     const { content } = await req.json();
+     const paramId = await params
 
     // Find and update chat room
     const chatRoom = await Chat.findByIdAndUpdate(
-      params.chatRoomId,
+      paramId.chatRoomId,
       {
         $push: {
           messages: {

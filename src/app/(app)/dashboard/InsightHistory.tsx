@@ -5,14 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, Brain, MessageCircle, RefreshCw } from 'lucide-react';
+import { HistoryItem } from '@/types/interfaces';
+import { formatTime } from '@/helpers/formatTime';
 
-interface HistoryItem {
-  id: string;
-  type: 'thought' | 'confession';
-  timestamp: Date;
-  preview: string;
-  aiSummary: string;
-}
 
 const InsightHistory = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -37,13 +32,7 @@ const InsightHistory = () => {
     }
   };
 
- const formatTime = (date: Date | string) => {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
-    Math.ceil((d.getTime() - Date.now()) / (1000 * 60)),
-    'minute'
-  );
-};
+
 
   return (
     <Card className="w-full">
