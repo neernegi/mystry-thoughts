@@ -1,7 +1,7 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/option";
 import dbConnect from "@/lib/dbConnect";
-import ThoughtModel, { IReply, IThought } from "@/model/thoughts";
-import UserModel, { User } from "@/model/user";
+import ThoughtModel, { IReply } from "@/model/thoughts";
+import UserModel from "@/model/user";
 import { AddReplySchema } from "@/schemas/thoughtsSchema";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";

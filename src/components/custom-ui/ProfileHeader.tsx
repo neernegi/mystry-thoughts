@@ -13,10 +13,11 @@ import {
   // Image as ImageIcon,
 } from "lucide-react";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent,DialogTitle } from "@/components/ui/dialog";
 import { AvatarCustomizer } from "./AvatarCustomizer";
 import { ProfileData, User as IUser } from "@/types/interfaces";
 import { formatDate } from "@/helpers/formatTime";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 interface ProfileHeaderProps {
   avatarOptions?: IUser["avatarOptions"];
@@ -102,7 +103,7 @@ export default function ProfileHeader({ avatarOptions }: ProfileHeaderProps) {
 
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-pink-900/20 backdrop-blur-3xl"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800 backdrop-blur-3xl"></div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
         {/* Profile Header */}
@@ -114,7 +115,7 @@ export default function ProfileHeader({ avatarOptions }: ProfileHeaderProps) {
         >
           {/* Profile Image */}
           <div className="relative mx-auto w-32 h-32 mb-6">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"></div>
+            <div className="absolute inset-0 rounded-full animate-pulse"></div>
             {user.image ? (
               <img
                 src={user.image}
@@ -192,6 +193,9 @@ export default function ProfileHeader({ avatarOptions }: ProfileHeaderProps) {
         {/* Avatar Customizer Modal */}
         <Dialog open={showAvatarModal} onOpenChange={setShowAvatarModal}>
           <DialogContent className="max-w-[200vw] p-0 border-none bg-transparent">
+            <VisuallyHidden>
+              <DialogTitle>Avatar Customizer</DialogTitle>
+            </VisuallyHidden>
             <AvatarCustomizer
               onSave={handleSaveAvatar}
               onClose={() => setShowAvatarModal(false)}

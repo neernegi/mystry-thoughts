@@ -176,7 +176,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-pink-900/20 backdrop-blur-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-850 to-gray-800 backdrop-blur-3xl"></div>
 
         <div className="relative max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           {/* Profile Header */}

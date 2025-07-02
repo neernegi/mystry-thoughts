@@ -5,6 +5,8 @@
 import { z } from "zod";
 import mongoose from "mongoose";
 
+/*
+
 // EXPLANATION: Recursive Reply Schema with z.lazy()
 // z.lazy() allows self-referencing schemas (replies can have replies)
 const ReplySchema: z.ZodType<any> = z.lazy(() =>
@@ -39,6 +41,9 @@ const ThoughtSchema = z.object({
   thoughtReplies: z.array(ReplySchema).optional().default([]),
 });
 
+
+
+
 // EXPLANATION: Input validation for creating thoughts
 const CreateThoughtSchema = z.object({
   // Thought text: required, 1-500 characters
@@ -52,20 +57,21 @@ const CreateThoughtSchema = z.object({
     .optional(),
 });
 
+*/
+
 // EXPLANATION: Input validation for adding replies
 const AddReplySchema = z.object({
   // Thought ID: must be valid ObjectId string
   thoughtId: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
     message: "Invalid thought ID",
   }),
-  
+
   // Reply text: required, 1-300 characters
-  reply: z.string()
-    .min(1, "Reply cannot be empty")
-    .max(300, "Reply too long"),
-  
+  reply: z.string().min(1, "Reply cannot be empty").max(300, "Reply too long"),
+
   // Parent reply ID: optional (for nested replies), must be valid ObjectId if provided
-  thoughtReplyId: z.string()
+  thoughtReplyId: z
+    .string()
     .refine((val) => mongoose.Types.ObjectId.isValid(val), {
       message: "Invalid parent reply ID",
     })
@@ -74,18 +80,13 @@ const AddReplySchema = z.object({
 
 // EXPLANATION: Type exports
 // These create TypeScript types from Zod schemas for use in components
-type IReply = z.infer<typeof ReplySchema>;
-type IThought = z.infer<typeof ThoughtSchema>;
-type CreateThoughtInput = z.infer<typeof CreateThoughtSchema>;
+
 type AddReplyInput = z.infer<typeof AddReplySchema>;
 
-export { 
-  ReplySchema, 
-  ThoughtSchema, 
-  CreateThoughtSchema,
+export {
+  // ReplySchema,
+  // ThoughtSchema,
+  // CreateThoughtSchema,
   AddReplySchema,
-  type IReply, 
-  type IThought,
-  type CreateThoughtInput,
-  type AddReplyInput
+  type AddReplyInput,
 };

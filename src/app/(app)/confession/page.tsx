@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   RefreshCw,
   MessageCircle,
-  Send,
+
   MoreHorizontal,
   Trash2,
 } from "lucide-react";

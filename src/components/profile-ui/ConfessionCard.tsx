@@ -1,27 +1,20 @@
 import { Confession } from "@/types/interfaces";
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Heart, 
-  MessageCircle, 
-  Calendar, 
-  MapPin, 
-  Edit3, 
-  Trash2, 
-  Plus,
-  Eye,
-  EyeOff,
-  Send,
- 
-  Mail,
-  Users,
-  Image as ImageIcon,
-  X
-} from 'lucide-react';
+import { motion } from "framer-motion";
+import { MessageCircle, Trash2, Image as ImageIcon } from "lucide-react";
 
-
-
-export const ConfessionCard = ({ confession, index, isOwner, handleDelete, formatDate }: 
-  { confession: Confession, index: number, isOwner: boolean, handleDelete: Function, formatDate: Function }) => (
+export const ConfessionCard = ({
+  confession,
+  index,
+  isOwner,
+  handleDelete,
+  formatDate,
+}: {
+  confession: Confession;
+  index: number;
+  isOwner: boolean;
+  handleDelete: Function;
+  formatDate: Function;
+}) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -43,29 +36,30 @@ export const ConfessionCard = ({ confession, index, isOwner, handleDelete, forma
         ) : (
           <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 flex items-center justify-center">
             <span className="text-white text-sm font-bold">
-              {confession.user.username?.charAt(0).toUpperCase() || 'U'}
+              {confession.user.username?.charAt(0).toUpperCase() || "U"}
             </span>
           </div>
         )}
         <div>
           <p className="font-semibold">@{confession.user.username}</p>
-          <p className="text-gray-400 text-sm">{formatDate(confession.createdAt)}</p>
+          <p className="text-gray-400 text-sm">
+            {formatDate(confession.createdAt)}
+          </p>
         </div>
       </div>
       {isOwner && (
         <button
-          onClick={() => handleDelete(confession._id, 'confession')}
+          onClick={() => handleDelete(confession._id, "confession")}
           className="text-red-400 hover:text-red-300 transition-colors"
         >
           <Trash2 className="w-5 h-5" />
         </button>
       )}
     </div>
-    
+
     <p className="mb-4 leading-relaxed">{confession.confession}</p>
-    
+
     <div className="flex items-center space-x-4 text-gray-400">
-     
       <button className="flex items-center space-x-2 hover:text-pink-400 transition-colors">
         <MessageCircle className="w-5 h-5" />
         <span>{confession.repliesToConfession.length} Replies</span>

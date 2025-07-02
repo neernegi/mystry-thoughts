@@ -1,4 +1,3 @@
-// app/api/user/[identifier]/route.ts
 import { authOptions } from "@/app/api/auth/[...nextauth]/option";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/user";

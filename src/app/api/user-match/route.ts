@@ -1,13 +1,9 @@
-// ✅ app/api/match/route.ts
 
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/user";
-// import Message from "@/model/message";
 import UserMatch from "@/model/userMatch";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/option";
-// import { notifyNewMatch } from "@/socket/socket";
-import { Types } from "mongoose";
 import { NextResponse } from "next/server";
 import MessageRequest from "@/model/messageRequest";
 

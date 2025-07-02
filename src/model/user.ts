@@ -30,8 +30,7 @@ export interface User extends Document {
   socketId?: string;
   isVerified: boolean;
   avatarOptions?: AvatarOptions;
-  isAcceptingConfessionReply: boolean;
-  acceptMessages: boolean;
+ 
   createdAt: Date;
 }
 
@@ -102,11 +101,7 @@ const UserSchema: Schema<User> = new Schema({
     type: Schema.Types.Mixed,
     default: {}
   },
-  isAcceptingConfessionReply: {
-    type: Boolean,
-    default: true,
-  },
-  acceptMessages: { type: Boolean, default: true },
+
   createdAt: {
     type: Date,
     default: Date.now,

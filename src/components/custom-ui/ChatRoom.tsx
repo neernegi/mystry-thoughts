@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import { Send, MessageCircle } from 'lucide-react';
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 
 import { socket } from '@/lib/socketClient';
 import { Message } from '@/types/interfaces';

@@ -11,10 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X } from "lucide-react";
-import { User } from "@/model/user";
 import { AvatarOptions } from "@/types/interfaces";
 
-// Define AvatarOptions type
 
 
 interface AvatarCustomizerProps {
@@ -179,7 +177,7 @@ export function AvatarCustomizer({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
+        <div className="flex items-center justify-between bg-gradient-to-r from-gray-900 to-gray-800 text-white p-4">
           <h2 className="text-xl font-bold">Customize Your Avatar</h2>
           <button
             onClick={onClose}

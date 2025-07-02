@@ -12,7 +12,6 @@ import {
   Plus,
   ArrowRight,
   Bell,
-  UserPlus,
   Check,
   X,
   Send,
@@ -22,11 +21,9 @@ import { MatchingAnimation } from "@/components/custom-ui/MatchingAnimation";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { IMatch } from "@/model/userMatch";
 import { socket } from "@/lib/socketClient";
 import {
   ActiveChat,
-  ChatRoom,
   ExistingMatch,
   User as IUser,
   MatchFoundResponse,
@@ -284,15 +281,15 @@ export default function MatchPage() {
     }
   };
 
-  const getOtherUser = (match: ExistingMatch): IUser => {
-    if (!session?.user?._id) return match.user2;
+  // const getOtherUser = (match: ExistingMatch): IUser => {
+  //   if (!session?.user?._id) return match.user2;
 
-    const currentUserId = session.user._id;
-    const user1Id = match.user1._id.toString();
-    const user2Id = match.user2._id.toString();
+  //   const currentUserId = session.user._id;
+  //   const user1Id = match.user1._id.toString();
+  //   const user2Id = match.user2._id.toString();
 
-    return user1Id === currentUserId ? match.user2 : match.user1;
-  };
+  //   return user1Id === currentUserId ? match.user2 : match.user1;
+  // };
 
   if (isMatching) return <MatchingAnimation />;
   if (isMatched && matchedUser) {

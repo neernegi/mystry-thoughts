@@ -1,11 +1,8 @@
-// app/api/update-avatar/route.ts
 import { NextResponse } from "next/server";
-
 import UserModel from "@/model/user";
 import dbConnect from "@/lib/dbConnect";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/option";
-
 import { v2 as cloudinary } from "cloudinary";
 
 // Configure Cloudinary using environment variables

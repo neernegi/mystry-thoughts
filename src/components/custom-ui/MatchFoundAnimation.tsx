@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 export const MatchFoundAnimation = ({
   matchedUser,
@@ -10,13 +9,11 @@ export const MatchFoundAnimation = ({
   matchedUser: { anonymousName: string; avatar: string; chatRoomId: string };
   onContinue: () => void;
 }) => {
-  const router = useRouter();
 
   useEffect(() => {
-    // Auto-redirect after 5 seconds
     const timer = setTimeout(() => {
       onContinue();
-    }, 5000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [onContinue]);
@@ -42,11 +39,9 @@ export const MatchFoundAnimation = ({
             You matched with {matchedUser?.anonymousName || "Anonymous"}
           </p>
           <p className="mt-4 text-lg opacity-80">
-            Redirecting to chat in 5 seconds...
+            Redirecting to chat in 2 seconds...
           </p>
         </div>
-
-        
       </div>
     </div>
   );

@@ -1,14 +1,9 @@
 "use client";
 
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { ApiResponse } from "@/types/ApiResponse";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios, { AxiosError } from "axios";
+
 import { User } from "next-auth";
 import { useSession } from "next-auth/react";
-import React, { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import React from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,14 +13,12 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Copy, RefreshCw, Trash2 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import * as z from "zod";
+import { Copy } from "lucide-react";
+
 
 import InsightStats from "./InsightStats";
 import InsightHistory from "./InsightHistory";
 import DashboardInsights from "./DashboardInsights";
-// import DashboardInsights from "./DashboardInsights";
 
 function DashboardPage() {
   
@@ -91,9 +84,9 @@ function DashboardPage() {
         <div>
           <InsightHistory />
         </div>
-       {/* <div>
+       <div>
         <DashboardInsights />
-       </div> */}
+       </div>
          
      
       </div>

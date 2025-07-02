@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 
 import { getServerSession } from 'next-auth';
@@ -7,7 +7,7 @@ import dbConnect from '@/lib/dbConnect';
 import ConfessionModel from '@/model/confession';
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { confessionId: string; replyId: string } }
 ) {
   try {

@@ -1,6 +1,5 @@
 "use client";
 
-import { Heart, Sparkles } from "lucide-react";
 
 export const MatchingAnimation = ({
   onMatchFound,

@@ -1,10 +1,6 @@
-// components/dashboard/DashboardInsights.tsx
 'use client';
 
 import AIIInsight from "./AIInsights";
-
-// Make sure this import path is correct
-
 
 const DashboardInsights = () => {
   return (

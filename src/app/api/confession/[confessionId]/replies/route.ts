@@ -2,11 +2,11 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/option";
 import dbConnect from "@/lib/dbConnect";
 import ConfessionModel from "@/model/confession";
 import UserModel, { User } from "@/model/user";
-import { ReplyToConfessionSchema } from "@/schemas/confessionSchema";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { IReply, IConfession } from "@/model/confession";
+import { ReplyToConfessionSchema } from "@/schemas/confessionSchema";
 
 export async function POST(
   req: NextRequest,
