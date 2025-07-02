@@ -33,6 +33,7 @@
     "date-fns": "^4.1.0",
     "formidable": "^3.5.4",
     "framer-motion": "^12.18.1",
+    "groq-sdk": "^0.26.0",
     "lucide-react": "^0.511.0",
     "mongoose": "^8.15.1",
     "multer": "^2.0.0",

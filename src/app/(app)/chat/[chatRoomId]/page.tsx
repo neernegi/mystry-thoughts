@@ -4,20 +4,18 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 interface ChatPageProps {
-  params: {
+  params: Promise<{
     chatRoomId: string;
-  };
+  }>;
 }
 
 export default async function ChatPage({ params }: ChatPageProps) {
   const session = await getServerSession(authOptions);
-
-
-  const paramId = await params;
-
+  const { chatRoomId } = await params;
+  
   if (!session || !session.user) {
     redirect("/sign-in");
   }
-
-  return <ChatRoom chatRoomId={paramId.chatRoomId} />;
+  
+  return <ChatRoom chatRoomId={chatRoomId} />;
 }

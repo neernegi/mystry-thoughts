@@ -13,8 +13,6 @@ import { Brain, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InsightData } from "@/types/interfaces";
 
-
-
 const AIIInsight = ({ type }: { type: "thought" | "confession" }) => {
   const [currentInsight, setCurrentInsight] = useState<InsightData | null>(
     null
@@ -28,14 +26,22 @@ const AIIInsight = ({ type }: { type: "thought" | "confession" }) => {
     try {
       setIsLoading(true);
 
-      // Fetch random content based on the component type
+      // Fetch random content
       const response = await fetch(`/api/dashboard/random-${type}`);
       if (!response.ok) throw new Error("Failed to fetch content");
 
       const content = await response.json();
       if (!content) return null;
 
-      // Generate AI analysis
+      // Check if we have this content in our local history
+      const existingInHistory = insightHistory.find(
+        (insight) => insight.id === content._id
+      );
+      if (existingInHistory) {
+        return existingInHistory;
+      }
+
+      // Generate or get cached AI analysis
       const aiResponse = await fetch("/api/ai/generate-insight", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -96,7 +102,7 @@ const AIIInsight = ({ type }: { type: "thought" | "confession" }) => {
   }, []);
 
   const handleNextSlide = () => {
-    if (currentSlideIndex < 4) {
+    if (currentSlideIndex < 2) {
       setCurrentSlideIndex(currentSlideIndex + 1);
     } else {
       // If on last slide, generate new insight
@@ -169,7 +175,7 @@ const AIIInsight = ({ type }: { type: "thought" | "confession" }) => {
                   : "Confession Insights"}
               </CardTitle>
               <Badge variant="secondary" className="text-xs mt-1">
-                Slide {currentSlideIndex + 1}/5
+                Slide {currentSlideIndex + 1}/3
               </Badge>
             </div>
           </div>
@@ -177,7 +183,7 @@ const AIIInsight = ({ type }: { type: "thought" | "confession" }) => {
 
         {/* Slide Indicators */}
         <div className="flex justify-center gap-2 mt-2">
-          {[0, 1, 2, 3, 4].map((index) => (
+          {[0, 1, 2].map((index) => (
             <div
               key={index}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
@@ -227,7 +233,7 @@ const AIIInsight = ({ type }: { type: "thought" | "confession" }) => {
           <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
-        <Button variant="outline" onClick={handleNextSlide} className="gap-1">
+        <Button variant="outline" onClick={handleNextSlide} disabled={currentSlideIndex === 2} className="gap-1">
           Next
           <ChevronRight className="h-4 w-4" />
         </Button>

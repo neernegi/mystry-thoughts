@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
+import dbConnect from "@/lib/dbConnect";
+import AIInsightCache from "@/model/AIInsightCache";
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
+// Initialize Groq AI
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1"
+});
+
 export async function POST(request: NextRequest) {
   try {
+    await dbConnect();
     const { content, type } = await request.json();
 
     if (!content || !type) {
@@ -15,56 +25,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // SOLUTION 1: Use the model with more generous free tier limits
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    // Check cache first
+    const cachedInsight = await AIInsightCache.findOne({
+      content,
+      type,
+    });
+
+    if (cachedInsight) {
+      return NextResponse.json({ slides: cachedInsight.slides });
+    }
 
     const prompt =
       type === "thought"
         ? createThoughtPrompt(content)
         : createConfessionPrompt(content);
 
-    // SOLUTION 2: Implement robust retry logic for rate limit errors
-    let result;
-    let retries = 3;
-    let delay = 2000; // Start with 2 seconds
+    let aiResponseText: string;
 
-    while (retries > 0) {
+    try {
+      // Primary API: Try Gemini first
+      console.log("Attempting to generate insight with Gemini...");
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash-latest",
+      });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      aiResponseText = response.text();
+      console.log("Successfully generated insight with Gemini.");
+    } catch (geminiError: any) {
+      console.warn("Gemini API call failed:", geminiError.message);
+      
+      const isRateLimitError =
+        geminiError.status === 429 ||
+        (geminiError.message && geminiError.message.includes("429"));
+
+      if (isRateLimitError) {
+        // Fallback API: If Gemini is rate-limited, switch to Groq
+        console.log("Gemini rate limit hit. Switching to Groq as a fallback.");
         try {
-            result = await model.generateContent(prompt);
-            break; // Success! Exit the loop.
-        } catch (error: any) {
-            // Check if the error indicates a rate limit
-            const isRateLimitError = error.status === 429 || (error.message && error.message.includes('429'));
-            
-            if (isRateLimitError && retries > 1) {
-                console.warn(`Rate limit hit. Retrying in ${delay / 1000}s... (${retries - 1} retries left)`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                retries--;
-                delay *= 2; // Exponentially increase delay
-            } else {
-                // If it's another type of error or the last retry, throw it
-                console.error("Error generating AI insight:", error);
-                return NextResponse.json(
-                    { error: "Failed to generate AI insight due to API error or rate limits." },
-                    { status: error.status || 500 }
-                );
-            }
-        }
-    }
-    
-    if (!result) {
-        return NextResponse.json(
-            { error: "Failed to generate AI insight after multiple retries." },
+          const chatCompletion = await groq.chat.completions.create({
+            messages: [{ role: "user", content: prompt }],
+            model: "llama-3.3-70b-versatile",
+          });
+          aiResponseText = chatCompletion.choices[0]?.message?.content || "";
+          if (!aiResponseText) {
+            throw new Error("Groq returned an empty response.");
+          }
+          console.log("Successfully generated insight with Groq.");
+        } catch (groqError: any) {
+          console.error("Groq API call also failed:", groqError.message);
+          return NextResponse.json(
+            { error: "Failed to generate AI insight from both Gemini and Groq." },
             { status: 500 }
+          );
+        }
+      } else {
+        // Handle other Gemini errors
+        console.error("A non-rate-limit error occurred with the Gemini API:", geminiError);
+        return NextResponse.json(
+          { error: "Failed to generate AI insight due to a primary API error." },
+          { status: 500 }
         );
+      }
     }
-    
-    const response = await result.response;
-    const text = response.text();
-    const slides = parseAIResponse(text);
+
+    const slides = parseAIResponse(aiResponseText);
+
+    // Cache the new insight
+    await AIInsightCache.create({
+      content,
+      type,
+      slides,
+    });
 
     return NextResponse.json({ slides });
-
   } catch (error) {
     console.error("Final catch block:", error);
     return NextResponse.json(
@@ -74,7 +108,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ... (Your createThoughtPrompt, createConfessionPrompt, and parseAIResponse functions remain unchanged)
+// --- Helper Functions (No changes needed for these) ---
+
 function createThoughtPrompt(thought: string): string {
   return `
 Analyze this anonymous thought and create exactly 5 slides with insights. Each slide should have a heading and 3-4 bullet points.
@@ -179,7 +214,7 @@ function parseAIResponse(
     if (currentSlide) slides.push(currentSlide);
   }
 
-  // Ensure we have exactly 5 slides
+  // Ensure we have exactly 3 slides
   while (slides.length < 3) {
     slides.push({
       heading: "Additional Insight",
