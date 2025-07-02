@@ -8,7 +8,7 @@ import ConfessionModel from '@/model/confession';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { confessionId: string; replyId: string } }
+  { params }: { params: Promise<{ confessionId: string; replyId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,7 +18,7 @@ export async function DELETE(
 
     await dbConnect();
 
-    const { confessionId, replyId } = params;
+    const { confessionId, replyId } = await params;
 
     // Find the confession
     const confession = await ConfessionModel.findById(confessionId);

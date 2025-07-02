@@ -4,7 +4,7 @@ import { authOptions } from "../../auth/[...nextauth]/option";
 import Chat from "@/model/Chat";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request, { params }: { params: { chatRoomId: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ chatRoomId: string }> }) {
   await dbConnect();
 
   const session = await getServerSession(authOptions);
@@ -81,7 +81,7 @@ export async function GET(req: Request, { params }: { params: { chatRoomId: stri
   }
 }
 
-export async function POST(req: Request, { params }: { params: { chatRoomId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ chatRoomId: string }> }) {
   await dbConnect();
 
   const session = await getServerSession(authOptions);

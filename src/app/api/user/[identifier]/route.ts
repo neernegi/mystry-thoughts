@@ -9,7 +9,7 @@ import { Types } from "mongoose";
 
 export async function GET(
   req: NextRequest,
-  context: { params: { identifier: string } }
+  context: { params: Promise<{ identifier: string }> }
 ) {
   await dbConnect();
 
