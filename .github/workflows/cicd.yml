@@ -49,12 +49,7 @@ jobs:
       - name: Stop Socket.io server
         run: pkill -f "tsx server.ts" || true
       
-      - name: Upload test coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-coverage
-          path: coverage/
-
+      
   build:
     name: Production Build
     needs: test
@@ -109,12 +104,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: production-build
-          path: .
       
       - name: Install production dependencies
         run: npm ci --omit=dev

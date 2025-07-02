@@ -8,10 +8,13 @@ import AIInsightCache from "@/model/AIInsightCache";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 // Initialize Groq AI
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1"
-});
+let groq: Groq | null = null;
+if (process.env.GROQ_API_KEY) {
+  groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1",
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,7 +57,7 @@ export async function POST(request: NextRequest) {
       console.log("Successfully generated insight with Gemini.");
     } catch (geminiError: any) {
       console.warn("Gemini API call failed:", geminiError.message);
-      
+
       const isRateLimitError =
         geminiError.status === 429 ||
         (geminiError.message && geminiError.message.includes("429"));
@@ -63,6 +66,9 @@ export async function POST(request: NextRequest) {
         // Fallback API: If Gemini is rate-limited, switch to Groq
         console.log("Gemini rate limit hit. Switching to Groq as a fallback.");
         try {
+          if (!groq) {
+            throw new Error("Groq API key is not configured.");
+          }
           const chatCompletion = await groq.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
             model: "llama-3.3-70b-versatile",
@@ -75,15 +81,22 @@ export async function POST(request: NextRequest) {
         } catch (groqError: any) {
           console.error("Groq API call also failed:", groqError.message);
           return NextResponse.json(
-            { error: "Failed to generate AI insight from both Gemini and Groq." },
+            {
+              error: "Failed to generate AI insight from both Gemini and Groq.",
+            },
             { status: 500 }
           );
         }
       } else {
         // Handle other Gemini errors
-        console.error("A non-rate-limit error occurred with the Gemini API:", geminiError);
+        console.error(
+          "A non-rate-limit error occurred with the Gemini API:",
+          geminiError
+        );
         return NextResponse.json(
-          { error: "Failed to generate AI insight due to a primary API error." },
+          {
+            error: "Failed to generate AI insight due to a primary API error.",
+          },
           { status: 500 }
         );
       }
