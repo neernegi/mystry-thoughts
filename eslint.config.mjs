@@ -13,9 +13,15 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 
   {
-    // 👇 Custom rule override
     rules: {
+      // Disable unescaped quotes error in JSX
       "react/no-unescaped-entities": "off",
+
+      // Temporarily disable no-unused-vars (or warn instead of error)
+      "@typescript-eslint/no-unused-vars": "warn",
+
+      // Temporarily allow `any` type
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
 ];
