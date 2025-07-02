@@ -4,7 +4,7 @@ import { usernameValidation } from "@/schemas/signUpSchema";
 import { z } from "zod";
 
 
-export const UserNameQuerySchema = z.object({
+const UserNameQuerySchema = z.object({
   username: usernameValidation,
 });
 

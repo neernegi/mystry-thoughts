@@ -3,7 +3,14 @@ import ThoughtModel from "@/model/thoughts";
 import UserModel from "@/model/user";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/option";
-import cloudinary from "@/lib/cloudinary";
+import {
+  uploadThoughtImage,
+  fileToBase64,
+  validateImageFile,
+} from "@/helpers/cloudinaryHelper";
+
+
+
 
 export async function POST(req: Request) {
   await dbConnect();
@@ -18,16 +25,10 @@ export async function POST(req: Request) {
 
   try {
     const formData = await req.formData();
-
-   
-    
-
     const thought = formData.get("thought") as string;
-    const imageFile = formData
+    const imageFiles = formData
       .getAll("image")
       .filter((item) => item instanceof File) as File[];
-
-   
 
     if (!thought || thought.trim() === "") {
       return Response.json(
@@ -46,50 +47,40 @@ export async function POST(req: Request) {
 
     let uploadedImageUrls: string[] = [];
 
-    if (imageFile.length > 0) {
-      for (const file of imageFile) {
-        try {
-          const allowedTypes = [
-            "image/jpeg",
-            "image/jpg",
-            "image/png",
-            "image/webp",
-          ];
-          if (!allowedTypes.includes(file.type)) {
-            return Response.json(
-              {
-                success: false,
-                message:
-                  "Invalid file type. Only JPEG, PNG, and WEBP are allowed.",
-              },
-              { status: 400 }
-            );
-          }
-
-          if (file.size > 5 * 1024 * 1024) {
-            return Response.json(
-              {
-                success: false,
-                message: "One of the files is too large. Max size is 5MB.",
-              },
-              { status: 400 }
-            );
-          }
-
-          const buffer = await file.arrayBuffer();
-          const base64 = Buffer.from(buffer).toString("base64");
-          const dataUri = `data:${file.type};base64,${base64}`;
-
-          const uploadResult = await cloudinary.uploader.upload(dataUri, {
-            folder: "thoughts",
-            transformation: [{ width: 800, height: 600, crop: "limit" }],
-          });
-
-          uploadedImageUrls.push(uploadResult.secure_url);
-        } catch (err) {
-          console.error("Error uploading file:", err);
+    if (imageFiles.length > 0) {
+      for (const file of imageFiles) {
+        // Validate file
+        const validation = validateImageFile(file, 5);
+        if (!validation.isValid) {
           return Response.json(
-            { success: false, message: "Error uploading image file." },
+            {
+              success: false,
+              message: validation.error,
+            },
+            { status: 400 }
+          );
+        }
+
+        try {
+          // Convert file to base64
+          const base64DataUri = await fileToBase64(file);
+
+          // Upload to Cloudinary
+          const uploadResult = await uploadThoughtImage(base64DataUri);
+
+          if (uploadResult.success && uploadResult.url) {
+            uploadedImageUrls.push(uploadResult.url);
+          } else {
+            console.error("Error uploading file:", uploadResult.error);
+            return Response.json(
+              { success: false, message: "Error uploading image file." },
+              { status: 500 }
+            );
+          }
+        } catch (err) {
+          console.error("Error processing file:", err);
+          return Response.json(
+            { success: false, message: "Error processing image file." },
             { status: 500 }
           );
         }
@@ -119,6 +110,7 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
 export async function GET(req: Request) {
   await dbConnect();
@@ -230,4 +222,3 @@ export async function PUT(req: Request) {
     );
   }
 }
-

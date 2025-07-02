@@ -2,14 +2,7 @@ import { sendVerificationEmail } from "@/helpers/sendVerificationEmail";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/user";
 import bcrypt from "bcryptjs";
-import { v2 as cloudinary } from "cloudinary";
-
-// Configure Cloudinary using environment variables
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET,
-});
+import { uploadAvatar } from "@/helpers/cloudinaryHelper";
 
 export async function POST(request: Request) {
   await dbConnect();
@@ -45,57 +38,16 @@ export async function POST(request: Request) {
     const defaultAvatarUrl = `https://avataaars.io/?${params.toString()}`;
     let finalImageUrl = "";
 
-    // Upload custom image to Cloudinary if provided
-    if (image) {
-      try {
-        const uploadResponse = await cloudinary.uploader.upload(image, {
-          folder: "avatars",
-          public_id: `avatar_${username}_${Date.now()}`,
-          transformation: [
-            { width: 200, height: 200, crop: "fill" },
-            { quality: "auto" },
-            { format: "webp" },
-          ],
-          overwrite: true,
-        });
+    // Upload custom image if provided, otherwise upload generated avatar
+    const imageToUpload = image || defaultAvatarUrl;
+    const uploadResult = await uploadAvatar(imageToUpload, username);
 
-        if (uploadResponse?.secure_url) {
-          finalImageUrl = uploadResponse.secure_url;
-          console.log("Custom image uploaded to Cloudinary");
-        }
-      } catch (uploadError) {
-        console.error("Cloudinary upload error (custom image):", uploadError);
-        // fallback to generated avatar
-      }
-    }
-
-    // If no image was uploaded or custom image failed, upload generated avatar to Cloudinary
-    if (!finalImageUrl) {
-      try {
-        const uploadResponse = await cloudinary.uploader.upload(
-          defaultAvatarUrl,
-          {
-            folder: "avatars",
-            public_id: `default_avatar_${username}_${Date.now()}`,
-            transformation: [
-              { width: 200, height: 200, crop: "fill" },
-              { quality: "auto" },
-              { format: "webp" },
-            ],
-            overwrite: true,
-          }
-        );
-
-        if (uploadResponse?.secure_url) {
-          finalImageUrl = uploadResponse.secure_url;
-          console.log("Generated avatar uploaded to Cloudinary");
-        } else {
-          finalImageUrl = defaultAvatarUrl; // fallback if Cloudinary upload fails
-        }
-      } catch (error) {
-        console.error("Cloudinary upload error (generated avatar):", error);
-        finalImageUrl = defaultAvatarUrl; // fallback
-      }
+    if (uploadResult.success && uploadResult.url) {
+      finalImageUrl = uploadResult.url;
+      console.log("Avatar uploaded to Cloudinary successfully");
+    } else {
+      console.error("Avatar upload failed:", uploadResult.error);
+      finalImageUrl = defaultAvatarUrl; // fallback to direct URL
     }
 
     // Check if username is already taken (verified users only)
