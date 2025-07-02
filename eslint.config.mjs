@@ -14,14 +14,18 @@ const eslintConfig = [
 
   {
     rules: {
-      // Disable unescaped quotes error in JSX
       "react/no-unescaped-entities": "off",
-
-      // Temporarily disable no-unused-vars (or warn instead of error)
       "@typescript-eslint/no-unused-vars": "warn",
-
-      // Temporarily allow `any` type
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-types": [
+        "error",
+        {
+          extendDefaults: true,
+          types: {
+            Function: false, 
+          },
+        },
+      ],
     },
   },
 ];
