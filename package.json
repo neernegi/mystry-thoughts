@@ -7,8 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-     "type-check": "tsc --noEmit",
-    "lint": "next lint"
+    "type-check": "tsc --noEmit",
+    "lint": "next lint",
+    "test": "echo \"No tests defined\""
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
