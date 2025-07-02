@@ -49,7 +49,7 @@ export const authOptions: NextAuthOptions = {
               gender:user.gender,
               isVerified: user.isVerified,
               image:user.image,
-              isAcceptingConfessionReply: user.isAcceptingConfessionReply,
+              
             };
           } else {
             throw new Error("Invalid password");
