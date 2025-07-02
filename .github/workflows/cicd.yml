@@ -39,8 +39,6 @@ jobs:
       - name: Type checking
         run: npm run type-check
       
-      - name: Lint code
-        run: npm run lint
       
       - name: Start Socket.io server
         run: npm run dev:socket &

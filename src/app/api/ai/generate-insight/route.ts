@@ -81,12 +81,10 @@ Analyze this anonymous thought and create exactly 5 slides with insights. Each s
 
 Thought: "${thought}"
 
-Create 5 slides with these themes:
+Create 4 slides with these themes:
 1. **Summary & Key Themes** - Summarize the main points and identify key themes
 2. **Emotional Analysis** - Analyze the emotions and feelings expressed
-3. **AI Perspective** - Provide AI's thoughtful response and perspective
-4. **Potential Insights** - Share deeper insights or patterns you notice
-5. **Encouraging Response** - Offer supportive or motivational perspective
+3. **Encouraging Response** - Offer supportive or motivational perspective
 
 Format your response EXACTLY like this:
 
@@ -94,33 +92,20 @@ SLIDE 1: Summary & Key Themes
 - Main point summarized in one clear sentence
 - Core theme or topic identified
 - Key message the person wants to convey
-- Overall tone and context
+
 
 SLIDE 2: Emotional Analysis
 - Primary emotion detected and explained
 - Secondary emotions or feelings present
-- Emotional intensity level observed
-- Psychological state indicators
 
-SLIDE 3: AI Perspective
-- AI's understanding of the situation
-- Thoughtful response to their concern
-- Balanced viewpoint on the matter
-- Constructive interpretation
 
-SLIDE 4: Potential Insights
-- Deeper pattern or meaning noticed
-- Possible underlying factors
-- Connections to common human experiences
-- Broader life lesson or wisdom
 
-SLIDE 5: Encouraging Response
+SLIDE 3: Encouraging Response
 - Supportive message for the person
 - Positive reframe if appropriate
-- Motivational insight or encouragement
-- Affirmation of their sharing
 
-Keep each bullet point concise but meaningful (10-15 words max).
+
+Keep each bullet point concise but meaningful (8-10 words max).
 `;
 }
 
@@ -133,43 +118,25 @@ Confession: "${confession}"
 Create 5 slides with these themes:
 1. **Summary & Understanding** - Summarize what they're confessing and show understanding
 2. **Emotional Support** - Acknowledge their feelings and provide emotional validation
-3. **AI's Compassionate Response** - Offer a non-judgmental, supportive perspective
-4. **Growth & Learning** - Focus on potential growth or lessons from this experience
-5. **Hope & Moving Forward** - Provide encouragement and positive outlook
+3. **Growth & Learning** - Focus on potential growth or lessons from this experience
+
 
 Format your response EXACTLY like this:
 
 SLIDE 1: Summary & Understanding
 - What they're confessing summarized respectfully
 - Understanding of why this matters to them
-- Recognition of their courage to share
-- Context of their emotional state
 
 SLIDE 2: Emotional Support
 - Validation of their feelings as normal
-- Acknowledgment of their emotional burden
-- Recognition that everyone makes mistakes
 - Comfort in knowing they're not alone
 
-SLIDE 3: AI's Compassionate Response
-- Non-judgmental perspective on their situation
-- Understanding of human complexity
-- Balanced view of their circumstances
-- Gentle wisdom about life's challenges
-
-SLIDE 4: Growth & Learning
+SLIDE 3: Growth & Learning
 - Potential lessons from this experience
-- How this could lead to personal growth
-- Strength shown in being honest
 - Opportunity for positive change
 
-SLIDE 5: Hope & Moving Forward
-- Encouragement for their journey ahead
-- Reminder of their worth and value
-- Hope for healing or resolution
-- Motivation to keep moving forward
 
-Keep each bullet point supportive and concise (10-15 words max).
+Keep each bullet point supportive and concise (8-10 words max).
 Be compassionate and avoid being preachy or judgmental.
 `;
 }
@@ -213,7 +180,7 @@ function parseAIResponse(
   }
 
   // Ensure we have exactly 5 slides
-  while (slides.length < 5) {
+  while (slides.length < 3) {
     slides.push({
       heading: "Additional Insight",
       bulletPoints: [
@@ -224,5 +191,5 @@ function parseAIResponse(
     });
   }
 
-  return slides.slice(0, 5);
+  return slides.slice(0, 3);
 }
