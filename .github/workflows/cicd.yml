@@ -85,7 +85,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/your-app-name:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/mystry-thoughts:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -93,7 +93,7 @@ jobs:
             NEXT_PUBLIC_SOCKET_URL=${{ env.NEXT_PUBLIC_SOCKET_URL }}
           
       - name: Save image name
-        run: echo "IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/your-app-name:latest" >> $GITHUB_ENV
+        run: echo "IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/mystry-thoughts:latest" >> $GITHUB_ENV
 
   deploy-to-render:
     name: Deploy to Render
