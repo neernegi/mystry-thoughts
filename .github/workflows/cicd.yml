@@ -41,8 +41,8 @@ jobs:
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -71,8 +71,8 @@ jobs:
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -99,6 +99,8 @@ jobs:
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
         run: |
           render deployments create \
-            --service-id $RENDER_SERVICE_ID \
+            --service-id "$RENDER_SERVICE_ID" \
             --branch main \
-            --token $RENDER_TOKEN
+            --token "$RENDER_TOKEN" \
+            --no-preview \
+            --no-wait
