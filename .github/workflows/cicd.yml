@@ -23,109 +23,83 @@ jobs:
       CLOUD_NAME: ${{ secrets.CLOUD_NAME }}
       CLOUD_API_KEY: ${{ secrets.CLOUD_API_KEY }}
     
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+        
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+          
       - name: Install dependencies
         run: npm ci
-      
+        
       - name: Type checking
         run: npm run type-check
-      
-      
+                
       - name: Start Socket.io server
         run: npm run dev:socket &
-      
+        
       - name: Run tests
         run: npm test
-      
+        
       - name: Stop Socket.io server
         run: pkill -f "tsx server.ts" || true
-      
-      
+
   build:
-    name: Production Build
+    name: Build Application
     needs: test
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+        
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+          
       - name: Install dependencies
         run: npm ci
-      
+          
       - name: Build application
         run: npm run build
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-build
-          path: |
-            .next
-            public
-            package.json
-            package-lock.json
-            next.config.ts
-            server.ts
-
-  deploy:
-    name: Deploy to Production
+        
+  deploy-to-render:
+    name: Deploy to Render
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     
-    env:
-      MONGODB_URI: ${{ secrets.MONGODB_URI }}
-      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-      CLOUD_NAME: ${{ secrets.CLOUD_NAME }}
-      CLOUD_API_KEY: ${{ secrets.CLOUD_API_KEY }}
-      CLOUD_API_SECRET: ${{ secrets.CLOUD_API_SECRET }}
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
+        
+      - name: Deploy to Render
+        uses: render-oss/deploy-render-action@v1.2.0
         with:
-          node-version: '20'
-      
-      - name: Install production dependencies
-        run: npm ci --omit=dev
-      
-      - name: Setup PM2 process manager
-        run: sudo npm install -g pm2
-      
-      - name: Start production servers
-        run: |
-          pm2 start npm --name "web" -- run start
-          pm2 start npm --name "socket" -- run dev:socket
-          pm2 save
-          pm2 startup
-      
-      - name: Save PM2 process list
-        run: pm2 save
-      
-      - name: Generate startup script
-        run: sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u $USER --hp $HOME
-      
-      - name: Verify servers are running
-        run: |
-          sleep 10  # Give servers time to start
-          pm2 list
-          curl -f http://localhost:3000/api/health || exit 1
+          render-token: ${{ secrets.RENDER_TOKEN }}
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          environment-variables: |
+            MONGODB_URI=${{ secrets.MONGODB_URI }}
+            NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+            CLOUD_NAME=${{ secrets.CLOUD_NAME }}
+            CLOUD_API_KEY=${{ secrets.CLOUD_API_KEY }}
+            CLOUD_API_SECRET=${{ secrets.CLOUD_API_SECRET }}
+            NODE_ENV=production
+            PORT=3000

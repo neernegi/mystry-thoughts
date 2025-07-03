@@ -6,7 +6,7 @@
     "dev:socket": "tsx server.ts",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "tsx server.ts",
     "type-check": "tsc --noEmit",
     "lint": "next lint",
     "test": "echo \"No tests defined\""

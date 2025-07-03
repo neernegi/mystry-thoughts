@@ -84,10 +84,10 @@ function DashboardPage() {
         <div>
           <InsightHistory />
         </div>
-       <div>
+       {/* <div>
         <DashboardInsights />
        </div>
-         
+          */}
      
       </div>
     </div>
