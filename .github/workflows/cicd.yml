@@ -106,18 +106,9 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Deploy to Render
-        uses: render-oss/deploy-render-action@v1.2.0
+        uses: JorgeLNJunior/render-deploy@v1.4.3
         with:
-          render-token: ${{ secrets.RENDER_TOKEN }}
-          service-id: ${{ secrets.RENDER_SERVICE_ID }}
-          image-name: ${{ env.IMAGE_NAME }}
-          environment-variables: |
-            MONGODB_URI=${{ secrets.MONGODB_URI }}
-            NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
-            CLOUD_NAME=${{ secrets.CLOUD_NAME }}
-            CLOUD_API_KEY=${{ secrets.CLOUD_API_KEY }}
-            CLOUD_API_SECRET=${{ secrets.CLOUD_API_SECRET }}
-            NODE_ENV=production
-            PORT=3000
-            SOCKET_PORT=3001
-            NEXT_PUBLIC_SOCKET_URL=${{ env.NEXT_PUBLIC_SOCKET_URL }}
+          service_id: ${{ secrets.RENDER_SERVICE_ID }}
+          api_key: ${{ secrets.RENDER_API_KEY }}
+          wait_deploy: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}

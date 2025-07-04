@@ -74,7 +74,7 @@ const SignInPage = () => {
         <CardContent className="p-8">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="email" className="block text-sm font-medium text-white">
                 Email or Username
               </label>
               <div className="relative">
@@ -98,7 +98,7 @@ const SignInPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="password" className="block text-sm font-medium text-white">
                 Password
               </label>
               <div className="relative">
@@ -133,7 +133,7 @@ const SignInPage = () => {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/20"
+              className="w-full bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 hover:from-gray-800 hover:to-gray-700 text-white py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/20"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
