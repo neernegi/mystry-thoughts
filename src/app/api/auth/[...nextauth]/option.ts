@@ -46,10 +46,10 @@ export const authOptions: NextAuthOptions = {
               _id: user._id,
               username: user.username,
               email: user.email,
-              gender:user.gender,
+              gender: user.gender,
               isVerified: user.isVerified,
-              image:user.image,
-              
+              image: user.image,
+
             };
           } else {
             throw new Error("Invalid password");
@@ -61,47 +61,37 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token._id = user._id?.toString();
         token.isVerified = user.isVerified;
-        token.image=user.image,
-        token.isAcceptingConfessionReply = user.isAcceptingConfessionReply;
         token.username = user.username;
         token.email = user.email;
+        token.image = user.image;
+        token.isAcceptingConfessionReply = user.isAcceptingConfessionReply;
       }
+
+      // Runs when session.update() is called
+      if (trigger === "update" && session) {
+        if (session.image) token.image = session.image;
+      }
+
       return token;
     },
+
     async session({ session, token }) {
-      if (token) {
-        session.user._id = token._id;
-        session.user.isVerified = token.isVerified;
-        session.user.isAcceptingConfessionReply =
-          token.isAcceptingConfessionReply;
-        session.user.username = token.username;
-        session.user.email = token.email;
-        session.user.image=token.image
-      }
+      session.user._id = token._id;
+      session.user.isVerified = token.isVerified;
+      session.user.username = token.username;
+      session.user.email = token.email;
+      session.user.image = token.image;
+      session.user.isAcceptingConfessionReply =
+        token.isAcceptingConfessionReply;
+
       return session;
-    },
-    async redirect({ url, baseUrl }) {
-      // Handle redirects properly to avoid loops
-      console.log("NextAuth redirect:", { url, baseUrl });
-
-      // If it's a relative URL, make it absolute
-      if (url.startsWith("/")) {
-        return `${baseUrl}${url}`;
-      }
-
-      // If it's the same origin, return as is
-      if (new URL(url).origin === baseUrl) {
-        return url;
-      }
-
-      // Default to base URL for external URLs
-      return baseUrl;
-    },
+    }
   },
+
   pages: {
     signIn: "/sign-in",
     error: "/sign-in",

@@ -12,12 +12,12 @@ import {
 
   // Image as ImageIcon,
 } from "lucide-react";
-
-import { Dialog, DialogContent,DialogTitle } from "@/components/ui/dialog";
+import { useSession } from "next-auth/react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { AvatarCustomizer } from "./AvatarCustomizer";
 import { ProfileData, User as IUser } from "@/types/interfaces";
 import { formatDate } from "@/helpers/formatTime";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface ProfileHeaderProps {
   avatarOptions?: IUser["avatarOptions"];
@@ -26,12 +26,11 @@ interface ProfileHeaderProps {
 export default function ProfileHeader({ avatarOptions }: ProfileHeaderProps) {
   const params = useParams();
   const identifier = params?.identifier as string;
-
+  const { update } = useSession();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-
   const [showAvatarModal, setShowAvatarModal] = useState(false);
 
   useEffect(() => {
@@ -87,6 +86,7 @@ export default function ProfileHeader({ avatarOptions }: ProfileHeaderProps) {
             image: imageUrl,
           },
         }));
+        await update({ image: imageUrl });
         setShowAvatarModal(false);
         toast.success("Avatar updated successfully!");
       }

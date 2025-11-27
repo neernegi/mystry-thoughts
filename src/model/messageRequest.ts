@@ -1,45 +1,47 @@
-import { Schema, Document, Types, model, models } from "mongoose";
+// model/messageRequest.ts
+import mongoose, { Schema, Document } from "mongoose";
 
 export interface IMessageRequest extends Document {
-  sender: Types.ObjectId;       // User who sent the request
-  recipient: Types.ObjectId;    // User who received the request
+  sender: mongoose.Types.ObjectId;
+  recipient: mongoose.Types.ObjectId;
   status: "pending" | "accepted" | "rejected";
-  relatedMatch?: Types.ObjectId; // Optional reference to the Match document
+  relatedMatch: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const MessageRequestSchema = new Schema<IMessageRequest>(
+const MessageRequestSchema: Schema<IMessageRequest> = new Schema(
   {
-    sender: { 
-      type: Schema.Types.ObjectId, 
-      ref: "User", 
-      required: true 
+    sender: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    recipient: { 
-      type: Schema.Types.ObjectId, 
-      ref: "User", 
-      required: true 
+    recipient: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    status: { 
-      type: String, 
-      enum: ["pending", "accepted", "rejected"], 
-      default: "pending" 
+    status: {
+      type: String,
+      enum: ["pending", "accepted", "rejected"],
+      default: "pending",
     },
-    relatedMatch: { 
-      type: Schema.Types.ObjectId, 
-      ref: "Match" 
-    }
+    relatedMatch: {
+      type: Schema.Types.ObjectId,
+      ref: "UserMatch", // CHANGED FROM "Match" to "UserMatch"
+      required: true,
+    },
   },
-  { 
-    timestamps: true // Adds createdAt and updatedAt automatically
-  }
+  { timestamps: true }
 );
 
-// Prevent duplicate requests between the same users
-MessageRequestSchema.index(
-  { sender: 1, recipient: 1 }, 
-  { unique: true }
-);
+// Add index for faster queries
+MessageRequestSchema.index({ sender: 1, recipient: 1 });
+MessageRequestSchema.index({ status: 1 });
 
-export default models.MessageRequest || model<IMessageRequest>("MessageRequest", MessageRequestSchema);
+const MessageRequest =
+  mongoose.models.MessageRequest ||
+  mongoose.model<IMessageRequest>("MessageRequest", MessageRequestSchema);
+
+export default MessageRequest;

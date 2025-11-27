@@ -32,9 +32,6 @@ import {
 } from "@/types/interfaces";
 import { formatTimeAgo } from "@/helpers/formatTime";
 
-
-
-
 export default function MatchPage() {
   const [isMatching, setIsMatching] = useState(false);
   const [isMatched, setIsMatched] = useState(false);
@@ -44,28 +41,26 @@ export default function MatchPage() {
     chatRoomId: string;
   } | null>(null);
   const [existingMatches, setExistingMatches] = useState<ExistingMatch[]>([]);
-  const [activeChats, setActiveChats] = useState<ActiveChat[]>([]); // New state for active chats
+  const [activeChats, setActiveChats] = useState<ActiveChat[]>([]);
   const [isLoadingMatchRequest, setIsLoadingMatchRequest] = useState(true);
-  const [matchRequestData, setMatchRequestData] = useState<MessageRequest[]>(
-    []
-  );
+  const [matchRequestData, setMatchRequestData] = useState<MessageRequest[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"active" | "requests" | "sent">(
-    "active"
-  );
+  const [activeTab, setActiveTab] = useState<"active" | "requests" | "sent">("active");
   const router = useRouter();
   const { data: session, status } = useSession();
 
-  // Separate requests into received and sent using useMemo
+  // Fixed: Correct logic for received and sent requests
   const receivedRequests = useMemo(() => {
+    if (!session?.user?._id) return [];
     return matchRequestData.filter(
-      (request) => request.sender._id !== session?.user?._id
+      (request) => request.recipient._id === session.user._id && request.status === "pending"
     );
   }, [matchRequestData, session?.user?._id]);
 
   const sentRequests = useMemo(() => {
+    if (!session?.user?._id) return [];
     return matchRequestData.filter(
-      (request) => request.sender._id === session?.user?._id
+      (request) => request.sender._id === session.user._id && request.status === "pending"
     );
   }, [matchRequestData, session?.user?._id]);
 
@@ -78,18 +73,36 @@ export default function MatchPage() {
   const handleFetchMatchRequest = async () => {
     setIsLoadingMatchRequest(true);
     try {
-      const response = await axios.get<MessageRequestResponse>(
-        "/api/messageRequest"
-      );
+      const response = await axios.get<MessageRequestResponse>("/api/messageRequest");
+
+      console.log('Full API response:', response.data);
 
       if (response.data.success) {
-        const allRequests = response.data.requests;
+        // Handle both response structures for compatibility
+        let allRequests: MessageRequest[] = [];
+        
+        // Some responses may nest requests under a `data` object (new structure),
+        // while others expose `requests` at the top level (old structure).
+        const maybeNested = (response.data as any).data;
+        if (maybeNested?.allRequests) {
+          // New structure with separated requests
+          allRequests = maybeNested.allRequests;
+          console.log('Using new response structure');
+        } else if (response.data.requests) {
+          // Old structure
+          allRequests = response.data.requests;
+          console.log('Using old response structure');
+        }
 
-        // Filter pending requests for the requests tab
-        const pendingRequests = allRequests.filter(
-          (req) => req.status === "pending"
-        );
-        setMatchRequestData(pendingRequests);
+        console.log('All requests:', allRequests);
+        console.log('Sent requests count:', allRequests.filter(req => 
+          req.sender._id === session?.user?._id && req.status === "pending"
+        ).length);
+        console.log('Received requests count:', allRequests.filter(req => 
+          req.recipient._id === session?.user?._id && req.status === "pending"
+        ).length);
+
+        setMatchRequestData(allRequests);
 
         // Filter accepted requests for active chats
         const acceptedRequests = allRequests.filter(
@@ -99,7 +112,7 @@ export default function MatchPage() {
         // Fetch chat room details for each accepted request
         await fetchActiveChats(acceptedRequests);
 
-        // Convert accepted requests to ExistingMatch format (keep for compatibility)
+        // Convert accepted requests to ExistingMatch format
         const activeMatches: ExistingMatch[] = acceptedRequests.map((req) => ({
           _id: req.relatedMatch,
           chatRoom: { _id: "temp" },
@@ -119,29 +132,34 @@ export default function MatchPage() {
     }
   };
 
-  // New function to fetch active chats with last messages
   const fetchActiveChats = async (acceptedRequests: MessageRequest[]) => {
     const chats: ActiveChat[] = [];
     const currentUserId = session?.user?._id;
 
     for (const request of acceptedRequests) {
       try {
-        const otherUser = request.sender._id === currentUserId ? request.recipient : request.sender;
+        const otherUser =
+          request.sender._id === currentUserId
+            ? request.recipient
+            : request.sender;
         const participants = [currentUserId, otherUser._id].join(",");
 
-        // Find the chat room
         const chatResponse = await axios.get(`/api/chat/find`, {
           params: { participants },
         });
 
         if (chatResponse.data.success && chatResponse.data.chatRoom) {
           const chatRoom = chatResponse.data.chatRoom;
-          
-          // Get chat details including messages
-          const chatDetailResponse = await axios.get(`/api/chat/${chatRoom._id}`);
-          
+
+          const chatDetailResponse = await axios.get(
+            `/api/chat/${chatRoom._id}`
+          );
+
           let lastMessage = undefined;
-          if (chatDetailResponse.data.success && chatDetailResponse.data.messages.length > 0) {
+          if (
+            chatDetailResponse.data.success &&
+            chatDetailResponse.data.messages.length > 0
+          ) {
             const messages = chatDetailResponse.data.messages;
             const lastMsg = messages[messages.length - 1];
             lastMessage = {
@@ -162,8 +180,10 @@ export default function MatchPage() {
         }
       } catch (error) {
         console.error("Error fetching chat details:", error);
-        // Still add the chat without last message if there's an error
-        const otherUser = request.sender._id === currentUserId ? request.recipient : request.sender;
+        const otherUser =
+          request.sender._id === currentUserId
+            ? request.recipient
+            : request.sender;
         chats.push({
           _id: request._id,
           chatRoomId: "",
@@ -260,7 +280,6 @@ export default function MatchPage() {
         socket.connect();
         router.push(`/chat/${chat.chatRoomId}`);
       } else {
-        // Fallback: find chat room if not available
         const currentUserId = session?.user?._id;
         const participants = [currentUserId, chat.otherUser._id].join(",");
 
@@ -280,16 +299,6 @@ export default function MatchPage() {
       toast.error("Failed to open chat");
     }
   };
-
-  // const getOtherUser = (match: ExistingMatch): IUser => {
-  //   if (!session?.user?._id) return match.user2;
-
-  //   const currentUserId = session.user._id;
-  //   const user1Id = match.user1._id.toString();
-  //   const user2Id = match.user2._id.toString();
-
-  //   return user1Id === currentUserId ? match.user2 : match.user1;
-  // };
 
   if (isMatching) return <MatchingAnimation />;
   if (isMatched && matchedUser) {
@@ -348,7 +357,6 @@ export default function MatchPage() {
           </div>
         )}
 
-        {/* Updated Tab Navigation */}
         <div className="flex mb-8 border-b border-gray-700">
           <button
             onClick={() => setActiveTab("active")}
@@ -402,7 +410,7 @@ export default function MatchPage() {
           </button>
         </div>
 
-        {/* Active Chats Tab - Updated to use activeChats */}
+        {/* Active Chats Tab */}
         {activeTab === "active" && (
           <>
             {!isLoadingMatchRequest && activeChats.length > 0 ? (
@@ -432,7 +440,9 @@ export default function MatchPage() {
                     {chat.lastMessage ? (
                       <div className="mb-4">
                         <p className="text-gray-300 text-sm line-clamp-2 mb-2">
-                          {chat.lastMessage.sender === session?.user?._id ? "You: " : ""}
+                          {chat.lastMessage.sender === session?.user?._id
+                            ? "You: "
+                            : ""}
                           {chat.lastMessage.content}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -475,7 +485,7 @@ export default function MatchPage() {
           </>
         )}
 
-        {/* Match Requests Tab - Only received requests */}
+        {/* Match Requests Tab */}
         {activeTab === "requests" && (
           <>
             {!isLoadingMatchRequest && receivedRequests.length > 0 ? (
@@ -549,7 +559,7 @@ export default function MatchPage() {
           </>
         )}
 
-        {/* Sent Requests Tab - Only sent requests */}
+        {/* Sent Requests Tab */}
         {activeTab === "sent" && (
           <>
             {!isLoadingMatchRequest && sentRequests.length > 0 ? (

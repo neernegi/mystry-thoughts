@@ -23,7 +23,7 @@ function VerifyAccount() {
     resolver: zodResolver(verifySchema),
     defaultValues: {
       code: "",
-      username: params.username // Include username in form values
+      username: params.username 
     },
   });
 

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
     if (!confession || confession.trim() === "") {
       return Response.json(
-        { success: false, message: "Thought cannot be empty" },
+        { success: false, message: "Confession cannot be empty" },
         { status: 400 }
       );
     }
@@ -37,8 +37,10 @@ export async function POST(req: Request) {
     const newConfession = await ConfessionModel.create({
       user: user._id,
       confession,
-      repliesToConfession: [],
     });
+
+    // Populate user details immediately for the frontend to use
+    await newConfession.populate("user", "username anonymousName image");
 
     return Response.json(
       {
@@ -49,7 +51,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error posting thought:", error);
+    console.error("Error posting confession:", error);
     return Response.json(
       { success: false, message: "Server error" },
       { status: 500 }
@@ -70,20 +72,18 @@ export async function GET(req: Request) {
   }
 
   try {
-    const confession = await ConfessionModel.find()
+    // Optimized: Only populate the user, removed nested reply population
+    const confessions = await ConfessionModel.find()
+      .sort({ createdAt: -1 }) // Show newest first
       .populate({
         path: "user",
         select: "username anonymousName image",
-      })
-      .populate({
-        path: "repliesToConfession.user",
-        model: "User",
-        select: "username anonymousName image",
       });
+
     return Response.json({
       success: true,
-      message: "successfully fetched",
-      data: confession,
+      message: "Successfully fetched",
+      data: confessions,
     });
   } catch (error) {
     return Response.json(
@@ -91,71 +91,6 @@ export async function GET(req: Request) {
         success: false,
         message: "An error occurred while fetching confessions.",
       },
-      { status: 500 }
-    );
-  }
-}
-
-
-export async function DELETE(req: Request) {
-  await dbConnect();
-  const session = await getServerSession(authOptions);
-
-  if (!session || !session.user?.email) {
-    return Response.json(
-      { success: false, message: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  try {
-    const { confessionId } = await req.json();
-
-    if (!confessionId) {
-      return Response.json(
-        { success: false, message: "confessionId is required" },
-        { status: 400 }
-      );
-    }
-
-    // ✅ Fetch the user from DB to get their ObjectId
-    const user = await UserModel.findOne({ email: session.user.email });
-    if (!user) {
-      return Response.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    // ✅ Find the confession
-    const confession = await ConfessionModel.findById(confessionId);
-    if (!confession) {
-      return Response.json(
-        { success: false, message: "Confession not found" },
-        { status: 404 }
-      );
-    }
-
-    // ✅ Compare ObjectIds correctly using .equals
-    if (confession.user.equals(user._id)) {
-      await ConfessionModel.findByIdAndDelete(confessionId);
-      return Response.json({
-        success: true,
-        message: "Confession deleted successfully",
-      });
-    } else {
-      return Response.json(
-        {
-          success: false,
-          message: "Only the confession owner can delete it",
-        },
-        { status: 403 }
-      );
-    }
-  } catch (error) {
-    console.error("Error deleting confession:", error);
-    return Response.json(
-      { success: false, message: "Server error during deletion" },
       { status: 500 }
     );
   }

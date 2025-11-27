@@ -5,9 +5,6 @@ import { NextRequest } from "next/server";
 import UserModel from "@/model/user";
 import ThoughtModel from "@/model/thoughts";
 
-
-
-
 export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ thoughtId: string }> }
